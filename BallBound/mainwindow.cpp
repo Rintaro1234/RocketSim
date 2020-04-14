@@ -6,7 +6,7 @@ int fps = 60;
 
 float random(float x0, float x1)
 {
-	return x0 + (x1 - x0) / 100.0f * (float)(std::rand() / (RAND_MAX / 100));
+	return x0 + (x1 - x0) / 256.0f * (float)(std::rand() / (RAND_MAX / 256));
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -58,7 +58,7 @@ void MainWindow::paintEvent(QPaintEvent *)
 	painter.setViewport(size.x / 2, size.y, viewportSize, viewportSize);
 
 	/* グリッド */
-	painter.setWindow(0, 0, m_gridSize, -m_gridSize);
+	painter.setWindow(0, -16, m_gridSize, -m_gridSize);
 
 	// ペンの設定
 	painter.setPen(QPen(Qt::gray, 1, Qt::SolidLine, Qt::FlatCap));
