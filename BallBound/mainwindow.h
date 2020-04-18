@@ -28,7 +28,7 @@ public:
 	int m_gridSize = m_gridNumber * m_gridSpan;
 	int m_maxPos = m_gridSize / 2;
 
-	CBall m_balls[2];
+	CBall m_balls[10];
 
 private:
     Ui::MainWindow *ui;

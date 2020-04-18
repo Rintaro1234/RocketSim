@@ -32,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
 		Vector2f Pos{ random(left, right), random(top, bottom)};
 		Vector2f speed{ random(-speedRange, speedRange), 0};
 		m_balls[i].setInitialValue(Pos, speed);
-		m_balls[i].setBall(10, Qt::red, false);
+		m_balls[i].setBall(20, Qt::red, false);
 	}
 }
 
@@ -104,13 +104,31 @@ void MainWindow::timerEvent(QTimerEvent *)
 	// ポーズされていないorポーズされている際にスペースが押されたら実行
 	if (!keyP || KeySpace == true)
 	{
+		int div = 16;
+		float div_dt = 1.0f / (fps * div);
 		update();
-		for (int i = 0; i < _countof(m_balls); i++)
+		for (int a = 0; a <= div; a++)
 		{
-			m_balls[i].Update(1.0f / fps, (float)m_maxPos / 1000, m_balls, _countof(m_balls), i);
+			// 移動計算(コリジョンは無視)
+			for (int i = 0; i < _countof(m_balls); i++)
+			{
+				m_balls[i].UpdateMove(div_dt);
+			}
+			// ボール同士のコリジョン
+			for (int i = 0; i < _countof(m_balls); i++)
+			{
+				for(int j = i + 1; j < _countof(m_balls); j++)
+				{
+					m_balls[i].UpdateCollideBoll(div_dt, m_balls[j]);	
+				}
+			}
+			// ボールと床のコリジョン
+			for (int i = 0; i < _countof(m_balls); i++)
+			{
+				m_balls[i].UpdateCollideWall(div_dt, (float)m_maxPos / 1000.0f);
+			}
 		}
 		KeySpace = false;
 	}
-	
 }
 

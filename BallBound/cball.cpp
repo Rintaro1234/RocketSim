@@ -13,130 +13,79 @@ void CBall::move(float dt)
 	m_Pos = m_Pos + (vel0 + m_Vel) * dt / 2.0f;
 }
 
-void CBall::Update(float dt, float maxPos, CBall other[], int arraySize, int myNumber)
+void CBall::UpdateMove(float dt)
 {
-	// 細かさ
-	int div = 16;
-	//col = Qt::red;
-	boxSize = maxPos;
-
 	// シミュレーションをリセットするために、初期状態を保存する
-	Vector2f base_vel = m_Vel;
-	Vector2f base_pos = m_Pos;
+	m_baseVel = m_Vel;
+	m_basePos = m_Pos;
 
-	// 落下
 	move(dt);
 
-	// 接地判定
-	if ((m_Pos.y - m_radius) <= 0.0f)
-	{
-		// 計算をやりなおす
-		m_Vel = base_vel;
-		m_Pos = base_pos;
-
-		if (A == false)
-		{
-			// 接地するまで落下
-			int countTime = 0;
-			float div_dt = dt / (float)div;
-			for (int i = 0; i < div; i++)
-			{
-				move(div_dt);
-				if ((m_Pos.y - m_radius) <= 0.0f) break;
-				countTime++;
-			}
-			m_Pos.y = m_radius;
-
-			// 速度ベクトルの向きを反転する(適当な減衰率をかける)
-			m_Vel.y = -m_Vel.y * 0.92f;
-
-			// 残り時間のシミュレーションを行う
-			float dt1 = dt * (div - countTime) / div;
-			move(dt1);
-		}
-		else
-		{
-			// 接地する瞬間までの経過時間 dt0 を求め、そこまでのシミュレーションを行う
-			float B = (m_Vel.y * m_Vel.y) - (2.0f * g * (m_Pos.y - m_radius));
-			float dt0 = (-m_Vel.y - std::sqrt(B)) / g;
-			move(dt0);
-
-			// 速度ベクトルの向きを反転する(適当な減衰率をかける)
-			m_Vel.y = -m_Vel.y * 0.92f;
-
-			// 残り時間のシミュレーションを行う
-			float dt1 = dt - dt0;
-			move(dt1);
-		}
-
-		// 計算の結果、高さが床より下になるようなら、強制的に座標を戻す
-		// 数値計算の誤差により、ボール座標が床の上に戻らない可能性がある
-		if ((m_Pos.y - m_radius) <= 0.0f)
-		{
-			m_Pos.y = m_radius;
-			m_Vel.y = 0.0f;
-		}
-	}
-
-	// 移動したときの範囲をボックス上にする
+	/*// 移動したときの範囲をボックス上にする
 	m_Rect.Empty();
-	m_Rect.Expand(base_pos, m_radius);
-	m_Rect.Expand(m_Pos, m_radius);
+	m_Rect.Expand(m_basePos, m_radius);
+	m_Rect.Expand(m_Pos, m_radius);*/
+}
 
-	if (boxSize < (m_Pos.x + m_radius))
+void CBall::UpdateCollideBoll(float dt, CBall &other)
+{
+	float dis = m_Pos.GetDistance(other.m_Pos);
+	if (m_Radius * 2 < dis)
+	{
+		return;
+	}
+
+	// 重心速度
+	Vector2f Vc = ((m_Mass * m_Vel) + (other.m_Mass * other.m_Vel)) / (m_Mass + other.m_Mass);
+	// 重心からの相対速度
+	Vector2f Va = m_Vel - Vc;
+	Vector2f Vb = other.m_Vel - Vc;
+	// 互いの重心を結んだベクトル
+	Vector2f N = m_Pos - other.m_Pos;
+	Vector2f Ha = N * N.dot(Va) / N.dot(N);
+	Va = Va - 2 * Ha;
+	Vector2f Hb = N * N.dot(Vb) / N.dot(N);
+	Vb = Vb - 2 * Hb;
+
+	m_Vel = Va + Vc;
+	other.m_Vel = Vb + Vc;
+
+	m_Pos = m_basePos;
+	other.m_Pos = other.m_basePos;
+}
+
+void CBall::UpdateCollideWall(float /*dt*/, float maxPos)
+{
+	// 接地判定
+	if ((m_Pos.y - m_Radius) <= 0.0f)
+	{
+		m_Vel.y = -m_Vel.y;
+		m_Pos.y = m_Radius;
+	}
+
+	// 壁との衝突判定
+	if (maxPos <= (m_Pos.x + m_Radius))
 	{
 		m_Vel.x = -m_Vel.x;
-		m_Pos.x = boxSize - m_radius;
+		m_Pos.x = maxPos - m_Radius;
 	}
-	
-	if ((m_Pos.x - m_radius) < -boxSize)
+
+	if ((m_Pos.x - m_Radius) <= -maxPos)
 	{
 		m_Vel.x = -m_Vel.x;
-		m_Pos.x = -boxSize + m_radius;
-	}
-	
-	// ほかのボールといちを比較
-	for (int i = 0; i <= arraySize; i++)
-	{
-		// 自分のことは計算しない
-		if (i != myNumber)
-		{
-			bool overlapped = m_Rect.isOverlapped(other[i].m_Rect);
-			if (overlapped)
-			{
-				m_Pos = base_pos;
-				m_Vel = base_vel;
-				// 少しづつ動かして衝突するか確認
-				int countTime = 0;
-				float div_dt = dt / (float)div;
-				for (int i = 0; i <= div; i++)
-				{
-					move(div_dt);
-					float distance = m_Pos.GetDistance(other[i].m_Pos);
-					countTime++;
-					if (distance <= m_radius)
-					{
-						col = Qt::blue;
-						break;
-					}
-				}
-
-				// のこりを計算
-				move(div_dt * (div - countTime));
-			}
-		}
+		m_Pos.x = -maxPos + m_Radius;
 	}
 }
 
 void CBall::draw(QPainter &painter)
 {
 	// 単位変換
-	int r = m_radius * 1000;
+	int r = m_Radius * 1000;
 	Vector2 position{ (int)(m_Pos.x * 1000), (int)(m_Pos.y * 1000) };
 	// 描画
 	painter.setPen(QPen(col, 2, Qt::SolidLine, Qt::FlatCap));
 	painter.drawEllipse((position.x - r), (position.y - r), r * 2, r * 2);
-	painter.drawRect(m_Rect.minX * 1000, m_Rect.minY * 1000, (m_Rect.maxX - m_Rect.minX) * 1000, (m_Rect.maxY - m_Rect.minY) * 1000);
+	//painter.drawRect(m_Rect.minX * 1000, m_Rect.minY * 1000, (m_Rect.maxX - m_Rect.minX) * 1000, (m_Rect.maxY - m_Rect.minY) * 1000);
 }
 
 void CBall::setInitialValue(Vector2f initialPos, Vector2f speed)
@@ -148,7 +97,7 @@ void CBall::setInitialValue(Vector2f initialPos, Vector2f speed)
 
 void CBall::setBall(int r, Qt::GlobalColor color, bool a)
 {
-	m_radius = (float)r / 1000;
+	m_Radius = (float)r / 1000;
 	col = color;
 	A = a;
 }

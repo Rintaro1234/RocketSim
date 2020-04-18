@@ -13,14 +13,29 @@ public:
 	// “ñ“_ŠÔ‚Ì‹——£‚ğ‹‚ß‚é
 	float GetDistance(Vector2f &vt);
 
+	float dot(const Vector2f &v) const
+	{
+		return (x * v.x) + (y * v.y);
+	}
+
 	Vector2f operator + (const Vector2f &v) const
 	{
 		return Vector2f{ x + v.x, y + v.y };
 	}
 
+	Vector2f operator - (const Vector2f &v) const
+	{
+		return Vector2f{ x - v.x, y - v.y };
+	}
+
 	Vector2f operator * (float s) const
 	{
 		return Vector2f{ x * s, y * s };
+	}
+
+	friend Vector2f operator * (float s, const Vector2f &v)
+	{
+		return Vector2f{ s * v.x, s * v.y };
 	}
 
 	Vector2f operator / (float d) const
