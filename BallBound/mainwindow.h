@@ -21,13 +21,14 @@ public:
 
 	void paintEvent(QPaintEvent *);
 	void timerEvent(QTimerEvent *);
+	void keyPressEvent(QKeyEvent *event);
 
 	int m_gridNumber = 12;
 	int m_gridSpan = 50;
 	int m_gridSize = m_gridNumber * m_gridSpan;
 	int m_maxPos = m_gridSize / 2;
 
-	CBall cBall[25];
+	CBall m_balls[2];
 
 private:
     Ui::MainWindow *ui;

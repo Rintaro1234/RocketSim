@@ -3,6 +3,8 @@
 #include <ctime>
 
 int fps = 60;
+bool keyP = false;
+bool KeySpace = false;
 
 float random(float x0, float x1)
 {
@@ -25,12 +27,12 @@ MainWindow::MainWindow(QWidget *parent)
 	float bottom = 0.4f;
 	float speedRange = 0.5f;
 
-	for (int i = 0; i < _countof(cBall); i++)
+	for (int i = 0; i < _countof(m_balls); i++)
 	{
 		Vector2f Pos{ random(left, right), random(top, bottom)};
 		Vector2f speed{ random(-speedRange, speedRange), 0};
-		cBall[i].setInitialValue(Pos, speed);
-		cBall[i].setBall(10, Qt::red);
+		m_balls[i].setInitialValue(Pos, speed);
+		m_balls[i].setBall(10, Qt::red, false);
 	}
 }
 
@@ -84,18 +86,31 @@ void MainWindow::paintEvent(QPaintEvent *)
 	}
 
 	painter.restore();
-	for (int i = 0; i < _countof(cBall); i++)
+	for (int i = 0; i < _countof(m_balls); i++)
 	{
-		cBall[i].draw(painter);
+		m_balls[i].draw(painter);
 	}
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+	// Pキーが押されたらポーズ
+	if (event->key() == Qt::Key_P)	   keyP = !keyP;
+	if (event->key() == Qt::Key_Space) KeySpace = true;
 }
 
 void MainWindow::timerEvent(QTimerEvent *)
 {
-	update();
-	for (int i = 0; i < _countof(cBall); i++)
+	// ポーズされていないorポーズされている際にスペースが押されたら実行
+	if (!keyP || KeySpace == true)
 	{
-		cBall[i].UpDate(1.0f / fps, (float)m_maxPos / 1000);
+		update();
+		for (int i = 0; i < _countof(m_balls); i++)
+		{
+			m_balls[i].Update(1.0f / fps, (float)m_maxPos / 1000, m_balls, _countof(m_balls), i);
+		}
+		KeySpace = false;
 	}
+	
 }
 
