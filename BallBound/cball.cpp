@@ -108,18 +108,31 @@ void CBall::UpdateCollideWall(float /*dt*/, float maxPos, float ParabolaFactor)
 	double c0 = m_Pos.x;
 	double xR[3], xI[3];
 	cubicEquation(c3, c2, c1, c0, xR, xI);
+	// ボールに最も近い放物線上の座標pを求める
+	Vector2f p{ (float)xR[0], (float)(pf * xR[0] * xR[0]) };
+	float minDist = (p - m_Pos).GetLength();
+	for (int i = 1; i < 3; i++)
+	{
+		if (abs(xI[i]) < 0.000001)
+		{
+			Vector2f pp{ (float)xR[i], (float)(pf * xR[i] * xR[i]) };
+			float d = (pp - m_Pos).GetLength();
+			if (d < minDist)
+			{
+				p = pp;
+				minDist = d;
+			}
+		}
+	}
 
-	char str[256];
-	sprintf(str, "x0 = %.3f + %.3fi\n", xR[0], xI[0]);
-	OutputDebugStringA(str);
+//	char str[256];
+	//sprintf(str, "x0 = %.3f + %.3fi\n", xR[0], xI[0]);
+	//OutputDebugStringA(str);
 	//sprintf(str, "x1 = %.3f + %.3fi\n", xR[1], xI[1]);
 	//OutputDebugStringA(str);
 	//sprintf(str, "x2 = %.3f + %.3fi\n", xR[2], xI[2]);
 	//OutputDebugStringA(str);
 	
-	// ボールに最も近い放物線上の座標p
-	Vector2f p{ (float)xR[0], (float)(pf * xR[0] * xR[0]) };
-
 	float floorDistance = m_Pos.GetDistance(p);
 	if (floorDistance <= m_Radius)
 	{

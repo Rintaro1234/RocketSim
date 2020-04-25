@@ -4,7 +4,7 @@
 
 int fps = 60;
 // 床となる放物線の係数
-float g_ParabolaFactor = 2.0f;
+float g_ParabolaFactor = 4.0f;
 // シミュレーションのポーズ
 bool g_Pause = false;
 // ポーズ中のステップ実行
@@ -22,6 +22,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 	startTimer(1000 / fps);
 
+	// 乱数のシードを切り替える
+	std::srand(std::time(0));
+
 	// シミュレーションをリセット
 	resetState();
 }
@@ -34,9 +37,6 @@ MainWindow::~MainWindow()
 // シミュレーションをリセットする
 void MainWindow::resetState(void)
 {
-	// 乱数のシードを切り替える
-	std::srand(std::time(0));
-
 	// ボールの初期位置と初速度を乱数で決める
 	// (ついでに色も)
 	float left = (float)-m_maxPos / 1000.0f;
@@ -53,7 +53,7 @@ void MainWindow::resetState(void)
 		Qt::GlobalColor color = ColorTable[i % _countof(ColorTable)];
 		m_balls[i].setBall(20, color, 1);
 	}
-	m_balls[0].setBall(40, ColorTable[0], 4);
+	//m_balls[0].setBall(40, ColorTable[0], 4);
 }
 
 void MainWindow::paintEvent(QPaintEvent *)
@@ -147,7 +147,7 @@ void MainWindow::timerEvent(QTimerEvent *)
 		// ポーズ中のステップ実行の場合には、1フレームをさらに細分化したステップで進める。
 		bool stepRun = (g_Pause && g_StepRun);
 		int stepCount = (stepRun? 1: div);
-		for (int a = 0; a <= stepCount; a++)
+		for (int a = 0; a < stepCount; a++)
 		{
 			// 移動計算(コリジョンは無視)
 			for (int i = 0; i < _countof(m_balls); i++)

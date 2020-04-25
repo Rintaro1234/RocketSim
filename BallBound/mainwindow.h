@@ -32,7 +32,7 @@ protected:
 	int m_gridSize = m_gridNumber * m_gridSpan;
 	int m_maxPos = m_gridSize / 2;
 
-	CBall m_balls[4];
+	CBall m_balls[32];
 
 private:
     Ui::MainWindow *ui;
