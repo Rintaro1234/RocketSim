@@ -13,9 +13,24 @@ public:
 	// 二点間の距離を求める
 	float GetDistance(Vector2f &vt);
 
+	// ベクトルの長さを1にする
+	float GetLength();
+
+	// 長さをそろえる
+	Vector2f normalize();
+
+	// 内積
 	float dot(const Vector2f &v) const
 	{
 		return (x * v.x) + (y * v.y);
+	}
+
+	// this を法線としたベクトルの反射
+	// this は長さ1.0に正規化されている前提
+	Vector2f reflect(const Vector2f v) const
+	{
+		Vector2f r = v - 2.0f * this->dot(v) * (*this);
+		return r;
 	}
 
 	Vector2f operator + (const Vector2f &v) const

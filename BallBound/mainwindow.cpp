@@ -3,8 +3,12 @@
 #include <ctime>
 
 int fps = 60;
-bool keyP = false;
-bool KeySpace = false;
+// 床となる放物線の係数
+float g_ParabolaFactor = 2.0f;
+// シミュレーションのポーズ
+bool g_Pause = false;
+// ポーズ中のステップ実行
+bool g_StepRun = false;
 
 float random(float x0, float x1)
 {
@@ -18,27 +22,38 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 	startTimer(1000 / fps);
 
-	// 乱数のシードを切り替える
-	std::srand(std::time(0));
-
-	float left = (float)-m_maxPos / 1000.0f;
-	float right = (float)m_maxPos / 1000.0f;
-	float top = 0.6f;
-	float bottom = 0.4f;
-	float speedRange = 0.5f;
-
-	for (int i = 0; i < _countof(m_balls); i++)
-	{
-		Vector2f Pos{ random(left, right), random(top, bottom)};
-		Vector2f speed{ random(-speedRange, speedRange), 0};
-		m_balls[i].setInitialValue(Pos, speed);
-		m_balls[i].setBall(20, Qt::red, false);
-	}
+	// シミュレーションをリセット
+	resetState();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+// シミュレーションをリセットする
+void MainWindow::resetState(void)
+{
+	// 乱数のシードを切り替える
+	std::srand(std::time(0));
+
+	// ボールの初期位置と初速度を乱数で決める
+	// (ついでに色も)
+	float left = (float)-m_maxPos / 1000.0f;
+	float right = (float)m_maxPos / 1000.0f;
+	float top = 0.6f;
+	float bottom = 0.4f;
+	float speedRange = 0.5f;
+	Qt::GlobalColor ColorTable[] = { Qt::red, Qt::blue, Qt::green, Qt::cyan, Qt::yellow };
+	for (int i = 0; i < _countof(m_balls); i++)
+	{
+		Vector2f Pos{ random(left, right), random(top, bottom) };
+		Vector2f speed{ random(-speedRange, speedRange), 0 };
+		m_balls[i].setInitialValue(Pos, speed);
+		Qt::GlobalColor color = ColorTable[i % _countof(ColorTable)];
+		m_balls[i].setBall(20, color, 1);
+	}
+	m_balls[0].setBall(40, ColorTable[0], 4);
 }
 
 void MainWindow::paintEvent(QPaintEvent *)
@@ -65,8 +80,6 @@ void MainWindow::paintEvent(QPaintEvent *)
 	// ペンの設定
 	painter.setPen(QPen(Qt::gray, 1, Qt::SolidLine, Qt::FlatCap));
 
-	painter.save();
-
 	// グリッド描画
 	painter.scale(1, -1);
 	// 縦軸
@@ -85,7 +98,20 @@ void MainWindow::paintEvent(QPaintEvent *)
 		painter.drawText(0, -yy, QString::number(yy) + "mm");
 	}
 
-	painter.restore();
+	// 曲線
+	painter.scale(1, -1);
+	painter.setPen(QPen(Qt::green, 1, Qt::SolidLine, Qt::FlatCap));
+	float x0 = (float)-m_maxPos / 1000.0f;
+	float y0 = g_ParabolaFactor * (x0 * x0);
+	for (int i = -m_maxPos+1; i <= m_maxPos; i++)
+	{
+		float x1 = (float)i / 1000.0f;
+		float y1 = g_ParabolaFactor * (x1 * x1);
+		painter.drawLine((int)(1000.0f*x0), (int)(1000.0f*y0), (int)(1000.0f*x1), (int)(1000.0f*y1));
+		x0 = x1;
+		y0 = y1;
+	}
+
 	for (int i = 0; i < _countof(m_balls); i++)
 	{
 		m_balls[i].draw(painter);
@@ -94,20 +120,34 @@ void MainWindow::paintEvent(QPaintEvent *)
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-	// Pキーが押されたらポーズ
-	if (event->key() == Qt::Key_P)	   keyP = !keyP;
-	if (event->key() == Qt::Key_Space) KeySpace = true;
+	// [P]キーが押されたらポーズ
+	if (event->key() == Qt::Key_P) g_Pause = !g_Pause;
+	// [スペース]キーでコマ送り
+	if (event->key() == Qt::Key_Space) g_StepRun = true;
+
+	// [O]キーでリセット
+	if (event->key() == Qt::Key_O)
+	{
+		// シミュレーションをリセット
+		resetState();
+		// ポーズ状態で再開
+		g_Pause = true;
+	}
 }
 
 void MainWindow::timerEvent(QTimerEvent *)
 {
 	// ポーズされていないorポーズされている際にスペースが押されたら実行
-	if (!keyP || KeySpace == true)
+	if (!g_Pause || g_StepRun)
 	{
+		// 衝突のすり抜けを防止するため、1フレームをさらに細分化してシミュレーションする。
 		int div = 16;
-		float div_dt = 1.0f / (fps * div);
-		update();
-		for (int a = 0; a <= div; a++)
+		float div_dt = 1.0f / (float)(fps * div);
+
+		// ポーズ中のステップ実行の場合には、1フレームをさらに細分化したステップで進める。
+		bool stepRun = (g_Pause && g_StepRun);
+		int stepCount = (stepRun? 1: div);
+		for (int a = 0; a <= stepCount; a++)
 		{
 			// 移動計算(コリジョンは無視)
 			for (int i = 0; i < _countof(m_balls); i++)
@@ -125,10 +165,13 @@ void MainWindow::timerEvent(QTimerEvent *)
 			// ボールと床のコリジョン
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
-				m_balls[i].UpdateCollideWall(div_dt, (float)m_maxPos / 1000.0f);
+				m_balls[i].UpdateCollideWall(div_dt, (float)m_maxPos / 1000.0f, g_ParabolaFactor);
 			}
 		}
-		KeySpace = false;
 	}
+	g_StepRun = false;
+
+	// Qtフレームワークに更新を通知
+	update();
 }
 

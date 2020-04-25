@@ -12,6 +12,22 @@ float Vector2f::GetDistance(Vector2f &vt)
 }
 
 //-----------------------------------------------------------------------------
+// ベクトルの長さを求める
+float Vector2f::GetLength(void)
+{
+	return std::sqrt((x * x) + (y * y));
+}
+
+//-----------------------------------------------------------------------------
+// ベクトルの長さを1にする
+Vector2f Vector2f::normalize(void)
+{
+	float a = 1 / Vector2f{ x, y }.GetLength();
+	Vector2f normalize{ (x * a), (y * a) };
+	return normalize;
+}
+
+//-----------------------------------------------------------------------------
 // Rect を空にする
 void Rect::Empty(void)
 {

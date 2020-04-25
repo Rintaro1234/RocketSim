@@ -16,12 +16,12 @@ public:
 	void draw(QPainter &painter);
 	// 更新
 	void UpdateMove(float dt);
-	void UpdateCollideWall(float dt, float maxPos);
+	void UpdateCollideWall(float dt, float maxPos, float ParabolaFactor);
 	void UpdateCollideBoll(float dt, CBall &other);
 	// 最初の位置
 	void setInitialValue(Vector2f initialPos, Vector2f speed);
 	// 色と半径
-	void setBall(int r, Qt::GlobalColor color, bool a);
+	void setBall(int r, Qt::GlobalColor color, float mass);
 	// 落下と移動
 	void move(float dt);
 
@@ -33,7 +33,6 @@ public:
 
 	float m_Mass = 1;
 	float m_Radius = 20;
+	static float m_ReflectionCoef;
 	Qt::GlobalColor col;
-
-	bool A = false;
 };

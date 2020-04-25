@@ -49,6 +49,9 @@
     <ClCompile Include="variable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CubicEquation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -73,6 +76,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="variable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CubicEquation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
