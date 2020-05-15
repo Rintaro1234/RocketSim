@@ -4,15 +4,15 @@
 
 int fps = 60;
 // 床となる放物線の係数
-float g_ParabolaFactor = 4.0f;
+FLOAT_T g_ParabolaFactor = 1.5f;
 // シミュレーションのポーズ
 bool g_Pause = false;
 // ポーズ中のステップ実行
 bool g_StepRun = false;
 
-float random(float x0, float x1)
+FLOAT_T random(FLOAT_T x0, FLOAT_T x1)
 {
-	return x0 + (x1 - x0) / 256.0f * (float)(std::rand() / (RAND_MAX / 256));
+	return x0 + (x1 - x0) / 256.0f * (FLOAT_T)(std::rand() / (RAND_MAX / 256));
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -39,11 +39,11 @@ void MainWindow::resetState(void)
 {
 	// ボールの初期位置と初速度を乱数で決める
 	// (ついでに色も)
-	float left = (float)-m_maxPos / 1000.0f;
-	float right = (float)m_maxPos / 1000.0f;
-	float top = 0.6f;
-	float bottom = 0.4f;
-	float speedRange = 0.5f;
+	FLOAT_T left = (FLOAT_T)-m_maxPos / 1000.0f;
+	FLOAT_T right = (FLOAT_T)m_maxPos / 1000.0f;
+	FLOAT_T top = 0.6f;
+	FLOAT_T bottom = 0.4f;
+	FLOAT_T speedRange = 0.5f;
 	Qt::GlobalColor ColorTable[] = { Qt::red, Qt::blue, Qt::green, Qt::cyan, Qt::yellow };
 	for (int i = 0; i < _countof(m_balls); i++)
 	{
@@ -101,12 +101,12 @@ void MainWindow::paintEvent(QPaintEvent *)
 	// 曲線
 	painter.scale(1, -1);
 	painter.setPen(QPen(Qt::green, 1, Qt::SolidLine, Qt::FlatCap));
-	float x0 = (float)-m_maxPos / 1000.0f;
-	float y0 = g_ParabolaFactor * (x0 * x0);
+	FLOAT_T x0 = (FLOAT_T)-m_maxPos / 1000.0f;
+	FLOAT_T y0 = g_ParabolaFactor * (x0 * x0);
 	for (int i = -m_maxPos+1; i <= m_maxPos; i++)
 	{
-		float x1 = (float)i / 1000.0f;
-		float y1 = g_ParabolaFactor * (x1 * x1);
+		FLOAT_T x1 = (FLOAT_T)i / 1000.0f;
+		FLOAT_T y1 = g_ParabolaFactor * (x1 * x1);
 		painter.drawLine((int)(1000.0f*x0), (int)(1000.0f*y0), (int)(1000.0f*x1), (int)(1000.0f*y1));
 		x0 = x1;
 		y0 = y1;
@@ -142,7 +142,7 @@ void MainWindow::timerEvent(QTimerEvent *)
 	{
 		// 衝突のすり抜けを防止するため、1フレームをさらに細分化してシミュレーションする。
 		int div = 16;
-		float div_dt = 1.0f / (float)(fps * div);
+		FLOAT_T div_dt = 1.0f / (FLOAT_T)(fps * div);
 
 		// ポーズ中のステップ実行の場合には、1フレームをさらに細分化したステップで進める。
 		bool stepRun = (g_Pause && g_StepRun);
@@ -165,11 +165,23 @@ void MainWindow::timerEvent(QTimerEvent *)
 			// ボールと床のコリジョン
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
-				m_balls[i].UpdateCollideWall(div_dt, (float)m_maxPos / 1000.0f, g_ParabolaFactor);
+				m_balls[i].UpdateCollideWall(div_dt, (FLOAT_T)m_maxPos / 1000.0f, g_ParabolaFactor);
 			}
 		}
 	}
 	g_StepRun = false;
+
+	// デバッグ表示
+	m_frameCounter++;
+	if (fps < m_frameCounter)
+	{
+		// デバッグ
+		char buffer[64];
+		sprintf_s(buffer, "Ft.x = %.3f, Ft.y = %.3f\n", CBall::sm_Ft.x, CBall::sm_Ft.y);
+		OutputDebugStringA(buffer);
+		CBall::sm_Ft = Vector2f();
+		m_frameCounter = 1;
+	}
 
 	// Qtフレームワークに更新を通知
 	update();

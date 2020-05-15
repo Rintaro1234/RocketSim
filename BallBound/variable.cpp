@@ -3,17 +3,17 @@
 
 //-----------------------------------------------------------------------------
 // 二点間の距離を求める
-float Vector2f::GetDistance(Vector2f &vt)
+FLOAT_T Vector2f::GetDistance(Vector2f &vt)
 {
-	float dx = (vt.x - x);
-	float dy = (vt.y - y);
-	float dis = std::sqrt((dx * dx) + (dy * dy));
+	FLOAT_T dx = (vt.x - x);
+	FLOAT_T dy = (vt.y - y);
+	FLOAT_T dis = std::sqrt((dx * dx) + (dy * dy));
 	return dis;
 }
 
 //-----------------------------------------------------------------------------
 // ベクトルの長さを求める
-float Vector2f::GetLength(void)
+FLOAT_T Vector2f::GetLength(void)
 {
 	return std::sqrt((x * x) + (y * y));
 }
@@ -22,7 +22,7 @@ float Vector2f::GetLength(void)
 // ベクトルの長さを1にする
 Vector2f Vector2f::normalize(void)
 {
-	float a = 1 / Vector2f{ x, y }.GetLength();
+	FLOAT_T a = 1 / Vector2f{ x, y }.GetLength();
 	Vector2f normalize{ (x * a), (y * a) };
 	return normalize;
 }
@@ -43,7 +43,7 @@ bool Rect::isEmpty(void)
 
 //-----------------------------------------------------------------------------
 // Rect を球で拡張する
-void Rect::Expand(Vector2f &pos, float r)
+void Rect::Expand(Vector2f &pos, FLOAT_T r)
 {
 	Vector2f sphereMin{ pos.x - r, pos.y - r };
 	Vector2f sphereMax{ pos.x + r, pos.y + r };
