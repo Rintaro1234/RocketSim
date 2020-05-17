@@ -1,13 +1,13 @@
-#include "mainwindow.h"
+ï»¿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <ctime>
 
 int fps = 60;
-// °‚Æ‚È‚é•ú•¨ü‚ÌŒW”
-FLOAT_T g_ParabolaFactor = 1.5f;
-// ƒVƒ~ƒ…ƒŒ[ƒVƒ‡ƒ“‚Ìƒ|[ƒY
+// åºŠã¨ãªã‚‹æ”¾ç‰©ç·šã®ä¿‚æ•°
+FLOAT_T g_ParabolaFactor = 2.0f;
+// ã‚·ãƒŸãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³ã®ãƒãƒ¼ã‚º
 bool g_Pause = false;
-// ƒ|[ƒY’†‚ÌƒXƒeƒbƒvÀs
+// ãƒãƒ¼ã‚ºä¸­ã®ã‚¹ãƒ†ãƒƒãƒ—å®Ÿè¡Œ
 bool g_StepRun = false;
 
 FLOAT_T random(FLOAT_T x0, FLOAT_T x1)
@@ -22,10 +22,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 	startTimer(1000 / fps);
 
-	// —”‚ÌƒV[ƒh‚ğØ‚è‘Ö‚¦‚é
+	// ä¹±æ•°ã®ã‚·ãƒ¼ãƒ‰ã‚’åˆ‡ã‚Šæ›¿ãˆã‚‹
 	std::srand(std::time(0));
 
-	// ƒVƒ~ƒ…ƒŒ[ƒVƒ‡ƒ“‚ğƒŠƒZƒbƒg
+	// ã‚·ãƒŸãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³ã‚’ãƒªã‚»ãƒƒãƒˆ
 	resetState();
 }
 
@@ -34,11 +34,11 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-// ƒVƒ~ƒ…ƒŒ[ƒVƒ‡ƒ“‚ğƒŠƒZƒbƒg‚·‚é
+// ã‚·ãƒŸãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³ã‚’ãƒªã‚»ãƒƒãƒˆã™ã‚‹
 void MainWindow::resetState(void)
 {
-	// ƒ{[ƒ‹‚Ì‰ŠúˆÊ’u‚Æ‰‘¬“x‚ğ—”‚ÅŒˆ‚ß‚é
-	// (‚Â‚¢‚Å‚ÉF‚à)
+	// ãƒœãƒ¼ãƒ«ã®åˆæœŸä½ç½®ã¨åˆé€Ÿåº¦ã‚’ä¹±æ•°ã§æ±ºã‚ã‚‹
+	// (ã¤ã„ã§ã«è‰²ã‚‚)
 	FLOAT_T left = (FLOAT_T)-m_maxPos / 1000.0f;
 	FLOAT_T right = (FLOAT_T)m_maxPos / 1000.0f;
 	FLOAT_T top = 0.6f;
@@ -51,38 +51,39 @@ void MainWindow::resetState(void)
 		Vector2f speed{ random(-speedRange, speedRange), 0 };
 		m_balls[i].setInitialValue(Pos, speed);
 		Qt::GlobalColor color = ColorTable[i % _countof(ColorTable)];
-		m_balls[i].setBall(20, color, 1);
+		m_balls[i].setBall(5, color, 1);
 	}
 	//m_balls[0].setBall(40, ColorTable[0], 4);
 }
 
 void MainWindow::paintEvent(QPaintEvent *)
 {
-	/* ‰æ–Ê”ÍˆÍ‚ğ“üè */
+	/* ç”»é¢ç¯„å›²ã‚’å…¥æ‰‹ */
 	Vector2 size;
 	size.x = width();
 	size.y = height();
 
-	/* ƒyƒ“‚Ì’è‹` */
+	/* ãƒšãƒ³ã®å®šç¾© */
 	QPainter painter(this);
-	// “h‚è‚Â‚Ô‚µ
+	// å¡—ã‚Šã¤ã¶ã—
 	painter.setBrush(Qt::black);
 	painter.drawRect(0, 0, size.x, size.y);
-	// ƒrƒ…[ƒ|[ƒg‚Ìw’è
-	int viewportSize;
-	if (size.x < size.y) viewportSize = size.x -32;
-	if (size.y < size.x) viewportSize = size.y -32;
-	painter.setViewport(size.x / 2, size.y, viewportSize, viewportSize);
+	// ãƒ“ãƒ¥ãƒ¼ãƒãƒ¼ãƒˆã®æŒ‡å®š
+	if (size.x < size.y) m_viewportSize = size.x -32;
+	if (size.y < size.x) m_viewportSize = size.y -32;
+	painter.setViewport(size.x / 2, size.y, m_viewportSize, m_viewportSize);
+	// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒ‰ãƒ©ãƒƒã‚°ã«ã‚ˆã‚‹åœ°å½¢ã‚³ãƒªã‚¸ãƒ§ãƒ³ã®ã‚ªãƒ•ã‚»ãƒƒãƒˆã‚’ã€æç”»ç¯„å›²ã®ã‚ªãƒ•ã‚»ãƒƒãƒˆã¨ã—ã¦åˆ©ç”¨
+	// ç”»é¢ä¸‹å´ã« bottom_margin [mm]ã®ãƒãƒ¼ã‚¸ãƒ³ã‚’è¨­ã‘ã‚‹
+	const FLOAT_T bottom_margin = 0.016f;
+	Vector2 windowOffset{ (int)(1000.0f * m_floorOffset0.x), (int)(1000.0f * (m_floorOffset0.y - bottom_margin)) };
+	painter.setWindow(windowOffset.x, windowOffset.y, m_gridSize, -m_gridSize);
 
-	/* ƒOƒŠƒbƒh */
-	painter.setWindow(0, -16, m_gridSize, -m_gridSize);
-
-	// ƒyƒ“‚Ìİ’è
+	// ãƒšãƒ³ã®è¨­å®š
 	painter.setPen(QPen(Qt::gray, 1, Qt::SolidLine, Qt::FlatCap));
 
-	// ƒOƒŠƒbƒh•`‰æ
+	// ã‚°ãƒªãƒƒãƒ‰æç”»
 	painter.scale(1, -1);
-	// c²
+	// ç¸¦è»¸
 	for (int i = 0; i <= m_gridNumber; i++)
 	{
 		int xx = -m_maxPos + m_gridSpan * i;
@@ -90,7 +91,7 @@ void MainWindow::paintEvent(QPaintEvent *)
 		painter.drawText(xx, 0, QString::number(xx) + "mm");
 	}
 
-	// ‰¡²
+	// æ¨ªè»¸
 	for (int i = 0; i <= m_gridNumber; i++)
 	{
 		int yy = m_gridSpan * i;
@@ -98,20 +99,27 @@ void MainWindow::paintEvent(QPaintEvent *)
 		painter.drawText(0, -yy, QString::number(yy) + "mm");
 	}
 
-	// ‹Èü
+	// æ›²ç·š
 	painter.scale(1, -1);
 	painter.setPen(QPen(Qt::green, 1, Qt::SolidLine, Qt::FlatCap));
 	FLOAT_T x0 = (FLOAT_T)-m_maxPos / 1000.0f;
-	FLOAT_T y0 = g_ParabolaFactor * (x0 * x0);
+	FLOAT_T y0 = g_ParabolaFactor * (x0 * x0) + m_floorOffset0.y;
 	for (int i = -m_maxPos+1; i <= m_maxPos; i++)
 	{
 		FLOAT_T x1 = (FLOAT_T)i / 1000.0f;
-		FLOAT_T y1 = g_ParabolaFactor * (x1 * x1);
-		painter.drawLine((int)(1000.0f*x0), (int)(1000.0f*y0), (int)(1000.0f*x1), (int)(1000.0f*y1));
+		FLOAT_T y1 = g_ParabolaFactor * (x1 * x1) + m_floorOffset0.y;
+		int offsetX = (int)(m_floorOffset0.x * 1000.0f);
+		painter.drawLine((int)(1000.0f*x0) + offsetX, (int)(1000.0f*y0), (int)(1000.0f*x1) + offsetX, (int)(1000.0f*y1));
 		x0 = x1;
 		y0 = y1;
 	}
-
+	// æ¨ªç·š
+	{
+		int offsetX = (int)(m_floorOffset0.x * 1000.0f);
+		int offsetY = (int)(m_floorOffset0.y * 1000.0f);
+		painter.drawLine((-m_maxPos + offsetX), offsetY, (-m_maxPos + offsetX), 2 * m_maxPos + offsetY);
+		painter.drawLine((m_maxPos + offsetX), offsetY, (m_maxPos + offsetX), 2 * m_maxPos + offsetY);
+	}
 	for (int i = 0; i < _countof(m_balls); i++)
 	{
 		m_balls[i].draw(painter);
@@ -120,41 +128,60 @@ void MainWindow::paintEvent(QPaintEvent *)
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-	// [P]ƒL[‚ª‰Ÿ‚³‚ê‚½‚çƒ|[ƒY
+	// [P]ã‚­ãƒ¼ãŒæŠ¼ã•ã‚ŒãŸã‚‰ãƒãƒ¼ã‚º
 	if (event->key() == Qt::Key_P) g_Pause = !g_Pause;
-	// [ƒXƒy[ƒX]ƒL[‚ÅƒRƒ}‘—‚è
+	// [ã‚¹ãƒšãƒ¼ã‚¹]ã‚­ãƒ¼ã§ã‚³ãƒé€ã‚Š
 	if (event->key() == Qt::Key_Space) g_StepRun = true;
 
-	// [O]ƒL[‚ÅƒŠƒZƒbƒg
+	// [O]ã‚­ãƒ¼ã§ãƒªã‚»ãƒƒãƒˆ
 	if (event->key() == Qt::Key_O)
 	{
-		// ƒVƒ~ƒ…ƒŒ[ƒVƒ‡ƒ“‚ğƒŠƒZƒbƒg
+		// ã‚·ãƒŸãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³ã‚’ãƒªã‚»ãƒƒãƒˆ
 		resetState();
-		// ƒ|[ƒYó‘Ô‚ÅÄŠJ
+		// ãƒãƒ¼ã‚ºçŠ¶æ…‹ã§å†é–‹
 		g_Pause = true;
 	}
 }
 
 void MainWindow::timerEvent(QTimerEvent *)
 {
-	// ƒ|[ƒY‚³‚ê‚Ä‚¢‚È‚¢orƒ|[ƒY‚³‚ê‚Ä‚¢‚éÛ‚ÉƒXƒy[ƒX‚ª‰Ÿ‚³‚ê‚½‚çÀs
+	// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ç§»å‹•é‡(ãƒ‰ãƒƒãƒˆ)ã‹ã‚‰ã€åœ°å½¢ã‚³ãƒªã‚¸ãƒ§ãƒ³ãŠã‚ˆã³ã€è¡¨ç¤ºç¯„å›²ã®ã‚ªãƒ•ã‚»ãƒƒãƒˆ([m])ã‚’è¨ˆç®—
+	Vector2f floorOffset{ 0.0f, 0.0f };
+	if (m_FirstUpdate)
+	{
+		// åˆå›ã§ã¯ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ä½ç½®ã‚’è¨˜éŒ²
+		m_initWindowPos = pos();
+		m_FirstUpdate = false;
+	}
+	else
+	{
+		// äºŒå›ç›®ä»¥é™ã€ã‚ªãƒ•ã‚»ãƒƒãƒˆã‚’è¨ˆç®—
+		QPoint windowMove = pos() - m_initWindowPos;
+		floorOffset.x = (FLOAT_T)(m_gridSize * windowMove.x()) / (FLOAT_T)(m_viewportSize * 1000);
+		floorOffset.y = (FLOAT_T)(-m_gridSize * windowMove.y()) / (FLOAT_T)(m_viewportSize * 1000);
+	}
+	// åœ°å½¢ã‚³ãƒªã‚¸ãƒ§ãƒ³ã®ç§»å‹•é€Ÿåº¦ã‚’è¨ˆç®—([m/s])
+	Vector2f floorVel = (floorOffset - m_floorOffset0) * (FLOAT_T)(fps);
+
+	// ãƒãƒ¼ã‚ºã•ã‚Œã¦ã„ãªã„orãƒãƒ¼ã‚ºã•ã‚Œã¦ã„ã‚‹éš›ã«ã‚¹ãƒšãƒ¼ã‚¹ãŒæŠ¼ã•ã‚ŒãŸã‚‰å®Ÿè¡Œ
 	if (!g_Pause || g_StepRun)
 	{
-		// Õ“Ë‚Ì‚·‚è”²‚¯‚ğ–h~‚·‚é‚½‚ßA1ƒtƒŒ[ƒ€‚ğ‚³‚ç‚É×•ª‰»‚µ‚ÄƒVƒ~ƒ…ƒŒ[ƒVƒ‡ƒ“‚·‚éB
+		// è¡çªã®ã™ã‚ŠæŠœã‘ã‚’é˜²æ­¢ã™ã‚‹ãŸã‚ã€1ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’ã•ã‚‰ã«ç´°åˆ†åŒ–ã—ã¦ã‚·ãƒŸãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³ã™ã‚‹ã€‚
 		int div = 16;
 		FLOAT_T div_dt = 1.0f / (FLOAT_T)(fps * div);
 
-		// ƒ|[ƒY’†‚ÌƒXƒeƒbƒvÀs‚Ìê‡‚É‚ÍA1ƒtƒŒ[ƒ€‚ğ‚³‚ç‚É×•ª‰»‚µ‚½ƒXƒeƒbƒv‚Åi‚ß‚éB
+		// ãƒãƒ¼ã‚ºä¸­ã®ã‚¹ãƒ†ãƒƒãƒ—å®Ÿè¡Œã®å ´åˆã«ã¯ã€1ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’ã•ã‚‰ã«ç´°åˆ†åŒ–ã—ãŸã‚¹ãƒ†ãƒƒãƒ—ã§é€²ã‚ã‚‹ã€‚
 		bool stepRun = (g_Pause && g_StepRun);
 		int stepCount = (stepRun? 1: div);
+
 		for (int a = 0; a < stepCount; a++)
 		{
-			// ˆÚ“®ŒvZ(ƒRƒŠƒWƒ‡ƒ“‚Í–³‹)
+			// ç§»å‹•è¨ˆç®—(ã‚³ãƒªã‚¸ãƒ§ãƒ³ã¯ç„¡è¦–)
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
 				m_balls[i].UpdateMove(div_dt);
 			}
-			// ƒ{[ƒ‹“¯m‚ÌƒRƒŠƒWƒ‡ƒ“
+			// ãƒœãƒ¼ãƒ«åŒå£«ã®ã‚³ãƒªã‚¸ãƒ§ãƒ³
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
 				for(int j = i + 1; j < _countof(m_balls); j++)
@@ -162,20 +189,25 @@ void MainWindow::timerEvent(QTimerEvent *)
 					m_balls[i].UpdateCollideBoll(div_dt, m_balls[j]);	
 				}
 			}
-			// ƒ{[ƒ‹‚Æ°‚ÌƒRƒŠƒWƒ‡ƒ“
+			// ãƒœãƒ¼ãƒ«ã¨åºŠã®ã‚³ãƒªã‚¸ãƒ§ãƒ³
+			// åœ°å½¢ã‚³ãƒªã‚¸ãƒ§ãƒ³ã®ã‚ªãƒ•ã‚»ãƒƒãƒˆãŒã‚ã‚‹å ´åˆã«ã¯ã€ãã®ç§»å‹•ã‚‚ç´°åˆ†åŒ–ã™ã‚‹
+			Vector2f co = m_floorOffset0 + (a + 1) * (floorOffset - m_floorOffset0) / stepCount;
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
-				m_balls[i].UpdateCollideWall(div_dt, (FLOAT_T)m_maxPos / 1000.0f, g_ParabolaFactor);
+				m_balls[i].UpdateCollideWall(div_dt, (FLOAT_T)m_maxPos / 1000.0f, g_ParabolaFactor, co, floorVel);
 			}
 		}
 	}
 	g_StepRun = false;
 
-	// ƒfƒoƒbƒO•\¦
+	// ã‚³ãƒªã‚¸ãƒ§ãƒ³ã®ã‚ªãƒ•ã‚»ãƒƒãƒˆã‚’æ¬¡ã®ã‚·ãƒŸãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³ã¸é€ã‚‹
+	m_floorOffset0 = floorOffset;
+
+	// ãƒ‡ãƒãƒƒã‚°è¡¨ç¤º
 	m_frameCounter++;
 	if (fps < m_frameCounter)
 	{
-		// ƒfƒoƒbƒO
+		// ãƒ‡ãƒãƒƒã‚°
 		char buffer[64];
 		sprintf_s(buffer, "Ft.x = %.3f, Ft.y = %.3f\n", CBall::sm_Ft.x, CBall::sm_Ft.y);
 		OutputDebugStringA(buffer);
@@ -183,7 +215,7 @@ void MainWindow::timerEvent(QTimerEvent *)
 		m_frameCounter = 1;
 	}
 
-	// QtƒtƒŒ[ƒ€ƒ[ƒN‚ÉXV‚ğ’Ê’m
+	// Qtãƒ•ãƒ¬ãƒ¼ãƒ ãƒ¯ãƒ¼ã‚¯ã«æ›´æ–°ã‚’é€šçŸ¥
 	update();
 }
 

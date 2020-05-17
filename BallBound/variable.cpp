@@ -1,8 +1,8 @@
-#include <cmath>
+ï»¿#include <cmath>
 #include "variable.h"
 
 //-----------------------------------------------------------------------------
-// “ñ“_ŠÔ‚Ì‹——£‚ğ‹‚ß‚é
+// äºŒç‚¹é–“ã®è·é›¢ã‚’æ±‚ã‚ã‚‹
 FLOAT_T Vector2f::GetDistance(Vector2f &vt)
 {
 	FLOAT_T dx = (vt.x - x);
@@ -12,14 +12,14 @@ FLOAT_T Vector2f::GetDistance(Vector2f &vt)
 }
 
 //-----------------------------------------------------------------------------
-// ƒxƒNƒgƒ‹‚Ì’·‚³‚ğ‹‚ß‚é
+// ãƒ™ã‚¯ãƒˆãƒ«ã®é•·ã•ã‚’æ±‚ã‚ã‚‹
 FLOAT_T Vector2f::GetLength(void)
 {
 	return std::sqrt((x * x) + (y * y));
 }
 
 //-----------------------------------------------------------------------------
-// ƒxƒNƒgƒ‹‚Ì’·‚³‚ğ1‚É‚·‚é
+// ãƒ™ã‚¯ãƒˆãƒ«ã®é•·ã•ã‚’1ã«ã™ã‚‹
 Vector2f Vector2f::normalize(void)
 {
 	FLOAT_T a = 1 / Vector2f{ x, y }.GetLength();
@@ -28,21 +28,21 @@ Vector2f Vector2f::normalize(void)
 }
 
 //-----------------------------------------------------------------------------
-// Rect ‚ğ‹ó‚É‚·‚é
+// Rect ã‚’ç©ºã«ã™ã‚‹
 void Rect::Empty(void)
 {
 	minX = maxX = minY = maxY = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
-// Rect ‚ª‹ó‚©”»’è‚·‚é
+// Rect ãŒç©ºã‹åˆ¤å®šã™ã‚‹
 bool Rect::isEmpty(void)
 {
 	return (maxX <= minX) || (maxY <= minY);
 }
 
 //-----------------------------------------------------------------------------
-// Rect ‚ğ‹…‚ÅŠg’£‚·‚é
+// Rect ã‚’çƒã§æ‹¡å¼µã™ã‚‹
 void Rect::Expand(Vector2f &pos, FLOAT_T r)
 {
 	Vector2f sphereMin{ pos.x - r, pos.y - r };
@@ -50,7 +50,7 @@ void Rect::Expand(Vector2f &pos, FLOAT_T r)
 
 	if (isEmpty())
 	{
-		// ‹…‚ÌƒoƒEƒ“ƒ_ƒŠ‚ğ‰Šú‹éŒ`‚Æ‚µ‚Ä‘ã“ü
+		// çƒã®ãƒã‚¦ãƒ³ãƒ€ãƒªã‚’åˆæœŸçŸ©å½¢ã¨ã—ã¦ä»£å…¥
 		minX = sphereMin.x;
 		maxX = sphereMax.x;
 		minY = sphereMin.y;
@@ -58,7 +58,7 @@ void Rect::Expand(Vector2f &pos, FLOAT_T r)
 	}
 	else
 	{
-		// ‹éŒ`‚ğŠg’£‚·‚é
+		// çŸ©å½¢ã‚’æ‹¡å¼µã™ã‚‹
 		if (sphereMin.x < minX) minX = sphereMin.x;
 		if (maxX < sphereMax.x) maxX = sphereMax.x;
 
@@ -68,7 +68,7 @@ void Rect::Expand(Vector2f &pos, FLOAT_T r)
 }
 
 //-----------------------------------------------------------------------------
-// Rect “¯m‚ªd‚È‚Á‚Ä‚¢‚é‚©”»’è
+// Rect åŒå£«ãŒé‡ãªã£ã¦ã„ã‚‹ã‹åˆ¤å®š
 bool Rect::isOverlapped(Rect &rect)
 {
 	bool outside =

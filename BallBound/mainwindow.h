@@ -1,4 +1,4 @@
-#ifndef MAINWINDOW_H
+﻿#ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <QMainWindow>
@@ -24,7 +24,7 @@ public:
 	void keyPressEvent(QKeyEvent *event);
 
 protected:
-	// �V�~�����[�V���������Z�b�g����
+	// シミュレーションをリセットする
 	void resetState(void);
 
 	int m_gridNumber = 12;
@@ -33,7 +33,16 @@ protected:
 	int m_maxPos = m_gridSize / 2;
 	int m_frameCounter = 0;
 
-	CBall m_balls[4];
+	CBall m_balls[512];
+
+	// 起動時のウィンドウの位置(ウィンドウドラッグによるコリジョン遊びで参照)
+	QPoint m_initWindowPos{ 0, 0 };
+	// 初回のシミュレーション更新のフラグ(ウィンドウドラッグによるコリジョン遊びで参照)
+	bool m_FirstUpdate = true;
+	// 直前のシミュレーションでの、コリジョンのオフセット
+	Vector2f m_floorOffset0{ 0.0f, 0.0f };
+
+	int m_viewportSize = 0;
 
 private:
     Ui::MainWindow *ui;

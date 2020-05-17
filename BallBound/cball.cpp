@@ -1,4 +1,4 @@
-#include <QPainter>
+ï»¿#include <QPainter>
 #include "cball.h"
 #include "CubicEquation.h"
 #include <windows.h>
@@ -11,22 +11,22 @@ Vector2f CBall::sm_Ft;
 //-----------------------------------------------------------------------------
 void CBall::move(FLOAT_T dt)
 {
-	// ‘O‰ñ‚ÌŒ‹‰Ê‚ğ‹L˜^
+	// å‰å›ã®çµæœã‚’è¨˜éŒ²
 	Vector2f vel0 = m_Vel;
-	// ŒvZ
+	// è¨ˆç®—
 	m_Vel.y = vel0.y + (g * dt);
 	m_Pos = m_Pos + (vel0 + m_Vel) * dt / 2.0f;
 }
 
 void CBall::UpdateMove(FLOAT_T dt)
 {
-	// ƒVƒ~ƒ…ƒŒ[ƒVƒ‡ƒ“‚ğƒŠƒZƒbƒg‚·‚é‚½‚ß‚ÉA‰Šúó‘Ô‚ğ•Û‘¶‚·‚é
+	// ã‚·ãƒŸãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³ã‚’ãƒªã‚»ãƒƒãƒˆã™ã‚‹ãŸã‚ã«ã€åˆæœŸçŠ¶æ…‹ã‚’ä¿å­˜ã™ã‚‹
 	m_baseVel = m_Vel;
 	m_basePos = m_Pos;
 
 	move(dt);
 
-	/*// ˆÚ“®‚µ‚½‚Æ‚«‚Ì”ÍˆÍ‚ğƒ{ƒbƒNƒXã‚É‚·‚é
+	/*// ç§»å‹•ã—ãŸã¨ãã®ç¯„å›²ã‚’ãƒœãƒƒã‚¯ã‚¹ä¸Šã«ã™ã‚‹
 	m_Rect.Empty();
 	m_Rect.Expand(m_basePos, m_radius);
 	m_Rect.Expand(m_Pos, m_radius);*/
@@ -34,14 +34,14 @@ void CBall::UpdateMove(FLOAT_T dt)
 
 void CBall::UpdateCollideBoll(FLOAT_T /*dt*/, CBall &other)
 {
-	// Õ“Ë‚ª‚È‚¯‚ê‚Î‰½‚à‚µ‚È‚¢
+	// è¡çªãŒãªã‘ã‚Œã°ä½•ã‚‚ã—ãªã„
 	FLOAT_T dis = m_Pos.GetDistance(other.m_Pos);
 	if ((m_Radius + other.m_Radius) < dis)
 	{
 		return;
 	}
 	
-	// –œ‚ªˆêA—£‚ê‚é•ûŒü‚È‚Ì‚ÉÕ“Ë‚ª”»’è‚³‚ê‚Ä‚¢‚½‚çAÕ“Ë‚ª‚È‚©‚Á‚½‚±‚Æ‚É‚·‚é
+	// ä¸‡ãŒä¸€ã€é›¢ã‚Œã‚‹æ–¹å‘ãªã®ã«è¡çªãŒåˆ¤å®šã•ã‚Œã¦ã„ãŸã‚‰ã€è¡çªãŒãªã‹ã£ãŸã“ã¨ã«ã™ã‚‹
 	{
 		Vector2f V = other.m_Vel - m_Vel;
 		Vector2f D = other.m_Pos - m_Pos;
@@ -58,21 +58,21 @@ void CBall::UpdateCollideBoll(FLOAT_T /*dt*/, CBall &other)
 	}
 	#endif
 
-	// dS‚ğŒ´“_‚Æ‚µ‚½À•WŒn‚ÅA”½ËŒvZ‚ğs‚¤B
-	// ‚»‚¤‚·‚é‚ÆA‚¨Œİ‚¢‚Ì‘¬“xƒxƒNƒgƒ‹‚ªA”½‘ÎŒü‚«‚Ì•Às‚É‚È‚é‚Ì‚ÅAƒVƒ“ƒvƒ‹‚ÉŒvZ‚Å‚«‚éB
-	// dS‚©‚ç‚Ì‘Š‘Î‘¬“x
+	// é‡å¿ƒã‚’åŸç‚¹ã¨ã—ãŸåº§æ¨™ç³»ã§ã€åå°„è¨ˆç®—ã‚’è¡Œã†ã€‚
+	// ãã†ã™ã‚‹ã¨ã€ãŠäº’ã„ã®é€Ÿåº¦ãƒ™ã‚¯ãƒˆãƒ«ãŒã€åå¯¾å‘ãã®ä¸¦è¡Œã«ãªã‚‹ã®ã§ã€ã‚·ãƒ³ãƒ—ãƒ«ã«è¨ˆç®—ã§ãã‚‹ã€‚
+	// é‡å¿ƒã‹ã‚‰ã®ç›¸å¯¾é€Ÿåº¦
 	Vector2f Vc = ((m_Mass * m_Vel) + (other.m_Mass * other.m_Vel)) / (m_Mass + other.m_Mass);
 	Vector2f Va = m_Vel - Vc;
 	Vector2f Vb = other.m_Vel - Vc;
 
-	// ”½ËŒvZ
+	// åå°„è¨ˆç®—
 	Vector2f N = (other.m_Pos - m_Pos).normalize();
 	Va = N.reflect(Va) * sm_ReflectionCoef;
 	Vb = N.reflect(Vb) * sm_ReflectionCoef;
-	// dSÀ•WŒn‚©‚çA’Êí‚ÌÀ•WŒn‚É–ß‚·
+	// é‡å¿ƒåº§æ¨™ç³»ã‹ã‚‰ã€é€šå¸¸ã®åº§æ¨™ç³»ã«æˆ»ã™
 	m_Vel = (Va + Vc);
 	other.m_Vel = (Vb + Vc);
-	// ˆÊ’u‚ğAÕ“Ë‚µ‚½uŠÔ‚ÉˆÚ“®(‹ß—)
+	// ä½ç½®ã‚’ã€è¡çªã—ãŸç¬é–“ã«ç§»å‹•(è¿‘ä¼¼)
 	Vector2f ct = m_Pos + (other.m_Pos - m_Pos) * m_Radius / (m_Radius + other.m_Radius);
 	m_Pos = ct - N * m_Radius;
 	other.m_Pos = ct + N * other.m_Radius;
@@ -88,48 +88,54 @@ void CBall::UpdateCollideBoll(FLOAT_T /*dt*/, CBall &other)
 	#endif
 }
 
-void CBall::UpdateCollideWall(FLOAT_T dt, FLOAT_T maxPos, FLOAT_T ParabolaFactor)
+void CBall::UpdateCollideWall(
+	FLOAT_T dt, FLOAT_T maxPos, FLOAT_T ParabolaFactor,
+	Vector2f &floorOffset, Vector2f &floorVel)
 {
-	// Ú’n”»’è
+	// æ¥åœ°åˆ¤å®š
 	if (ParabolaFactor == 0)
 	{
-		// ’è”‚ª0‚Ì‚Æ‚«
-		if ((m_Pos.y - m_Radius) <= 0.0f)
+		// åœ°å½¢ãŒå¹³é¢ã®å ´åˆ
+		if ((m_Pos.y - m_Radius) <= floorOffset.y)
 		{
-			m_Vel.y = -m_Vel.y * sm_ReflectionCoef;
-			m_Pos.y = m_Radius;
+			// ã‚ªãƒ•ã‚»ãƒƒãƒˆã•ã‚ŒãŸåºŠã«å¯¾ã—ã¦ä½ç½®ã‚’ä¿®æ­£
+			m_Pos.y = floorOffset.y + m_Radius;
+			// è³ªé‡ç„¡é™å¤§ã®åºŠã¨ãƒœãƒ¼ãƒ«ã®åå°„è¨ˆç®—
+			m_Vel.y = ((-m_Vel.y + floorVel.y) * sm_ReflectionCoef) + floorVel.y;
 
-			// Õ“ËƒGƒlƒ‹ƒM[‚ÌŒvZ
+			// è¡çªã‚¨ãƒãƒ«ã‚®ãƒ¼ã®è¨ˆç®—
 			{
 				Vector2f V = m_Vel - m_baseVel;
-				sm_Ft = sm_Ft + m_Mass * V; // ƒGƒlƒ‹ƒM[—Ê[N]‚ğ“ü‚ê‚é
+				sm_Ft = sm_Ft + m_Mass * V; // ã‚¨ãƒãƒ«ã‚®ãƒ¼é‡[N]ã‚’å…¥ã‚Œã‚‹
 			}
 		}
 	}
 	else
 	{
-		// ’è”‚ª0ˆÈŠO
-		// ƒ{[ƒ‹‚Æ•ú•¨ü‚ÌŒğ·”»’è
-		// ƒ{[ƒ‹‚ÉÅ‚à‹ß‚¢•ú•¨ü(y = pf * x^2)ã‚ÌÀ•Wp‚ğ‹‚ß‚é‚½‚ß‚ÉA
-		// (ƒ{[ƒ‹’†S - p)‚ÆAp‚ÌÚü‚Ì“àÏ‚ª0‚Æ‚È‚é‚±‚Æ‚ğ•\‚·®‚ğì‚èA
-		// OŸ•û’ö®‚ğ‰ğ‚­B‹•”‚ğ‚½‚È‚¢‰ğ‚ªˆê‚Â“¾‚ç‚ê‚éB
+		// åœ°å½¢ãŒäºŒæ¬¡å¼ã§å®šç¾©ã•ã‚Œã‚‹æ”¾ç‰©ç·šã®å ´åˆ
+		// ãƒœãƒ¼ãƒ«ã¨æ”¾ç‰©ç·šã®äº¤å·®åˆ¤å®š
+		// ãƒœãƒ¼ãƒ«ã«æœ€ã‚‚è¿‘ã„æ”¾ç‰©ç·š(y = pf * x^2)ä¸Šã®åº§æ¨™pã‚’æ±‚ã‚ã‚‹ãŸã‚ã«ã€
+		// (ãƒœãƒ¼ãƒ«ä¸­å¿ƒ - p)ã¨ã€pã®æ¥ç·šã®å†…ç©ãŒ0ã¨ãªã‚‹ã“ã¨ã‚’è¡¨ã™å¼ã‚’ä½œã‚Šã€
+		// ä¸‰æ¬¡æ–¹ç¨‹å¼ã‚’è§£ãã€‚è™šæ•°ã‚’æŒãŸãªã„è§£ãŒä¸€ã¤å¾—ã‚‰ã‚Œã‚‹ã€‚
 		// A*x^3+B*x+C
+		// Note: åœ°é¢ã®ã‚ªãƒ•ã‚»ãƒƒãƒˆã«å¯¾å¿œã™ã‚‹ãŸã‚ã€ãƒœãƒ¼ãƒ«åº§æ¨™ã‚’æ”¾ç‰©ç·šåº§æ¨™ç³»ã«å¤‰æ›ã™ã‚‹
+		Vector2f bp = m_Pos - floorOffset;
 		const FLOAT_T pf = ParabolaFactor;
 		double c3 = -2.0f * pf * pf;
 		double c2 = 0.0f;
-		double c1 = (2.0f * pf * m_Pos.y) - 1.0f;
-		double c0 = m_Pos.x;
+		double c1 = (2.0f * pf * bp.y) - 1.0f;
+		double c0 = bp.x;
 		double xR[3], xI[3];
 		cubicEquation(c3, c2, c1, c0, xR, xI);
-		// ƒ{[ƒ‹‚ÉÅ‚à‹ß‚¢•ú•¨üã‚ÌÀ•Wp‚ğ‹‚ß‚é
+		// ãƒœãƒ¼ãƒ«ã«æœ€ã‚‚è¿‘ã„æ”¾ç‰©ç·šä¸Šã®åº§æ¨™pã‚’æ±‚ã‚ã‚‹
 		Vector2f p{ (FLOAT_T)xR[0], (FLOAT_T)(pf * xR[0] * xR[0]) };
-		FLOAT_T minDist = (p - m_Pos).GetLength();
+		FLOAT_T minDist = (p - bp).GetLength();
 		for (int i = 1; i < 3; i++)
 		{
 			if (abs(xI[i]) < 0.000001)
 			{
 				Vector2f pp{ (FLOAT_T)xR[i], (FLOAT_T)(pf * xR[i] * xR[i]) };
-				FLOAT_T d = (pp - m_Pos).GetLength();
+				FLOAT_T d = (pp - bp).GetLength();
 				if (d < minDist)
 				{
 					p = pp;
@@ -146,52 +152,59 @@ void CBall::UpdateCollideWall(FLOAT_T dt, FLOAT_T maxPos, FLOAT_T ParabolaFactor
 			//sprintf(str, "x2 = %.3f + %.3fi\n", xR[2], xI[2]);
 			//OutputDebugStringA(str);
 
-		FLOAT_T floorDistance = m_Pos.GetDistance(p);
+		// ãƒœãƒ¼ãƒ«ã¨ã€æœ€ã‚‚è¿‘ã„äºŒæ¬¡æ›²ç·šä¸Šã®ç‚¹ã¨ã®è·é›¢ãŒã€ãƒœãƒ¼ãƒ«ã®åŠå¾„ã‚ˆã‚Šå°ã•ã‘ã‚Œã°ã€ã‚³ãƒªã‚¸ãƒ§ãƒ³ã‚ã‚Š
+		FLOAT_T floorDistance = bp.GetDistance(p);
 		if (floorDistance <= m_Radius)
 		{
-			// ÚüT
-			// Note: •ú•¨ü‚ğ¦‚·“ñŸ®(y = pf * x^2)‚Ì”÷•ª(y = 2 * pf * x)
+			// æ¥ç·šT
+			// Note: æ”¾ç‰©ç·šã‚’ç¤ºã™äºŒæ¬¡å¼(y = pf * x^2)ã®å¾®åˆ†(y = 2 * pf * x)
 			Vector2f T{ 1.0f, (2.0f * pf * p.x) };
 
-			// –@üN
+			// æ³•ç·šN
 			Vector2f N = Vector2f{ -T.y, T.x }.normalize();
-			// ‚Æ‚è‚ ‚¦‚¸AãŒü‚«‚Ì•ûŒü‚É‚»‚ë‚¦‚Ä‚¨‚­
+			// ã¨ã‚Šã‚ãˆãšã€ä¸Šå‘ãã®æ–¹å‘ã«ãã‚ãˆã¦ãŠã
 			if (N.y < 0.0f) N = -1.0f * N;
 
-			// ‘¬“xƒxƒNƒgƒ‹(m_Vel)‚ğ”½Ë‚·‚é
-			// ”½ËŒW”‚ğ‚©‚¯‚é
-			m_Vel = N.reflect(m_Vel) * sm_ReflectionCoef;
-			// ƒ{[ƒ‹‚ÌˆÊ’u‚ğÕ“Ë‚ÌuŠÔ‚Ö–ß‚·
-			m_Pos = p + m_Radius * N;
+			// é€Ÿåº¦ãƒ™ã‚¯ãƒˆãƒ«(m_Vel)ã‚’åå°„ã™ã‚‹
+			// åå°„ä¿‚æ•°ã‚’ã‹ã‘ã‚‹
+			// Note: åœ°é¢ã®ç§»å‹•ã«å¯¾å¿œã™ã‚‹ãŸã‚ã«ã€åœ°é¢åº§æ¨™ç³»ã§ã®é€Ÿåº¦ã‚’è€ƒãˆã¦è¨ˆç®—ã™ã‚‹
+			Vector2f v = m_Vel - floorVel;
+			m_Vel = N.reflect(v) * sm_ReflectionCoef;
+			// åœ°é¢åº§æ¨™ç³»ã§ã®åå°„ã‚’ã€ã‚·ãƒŸãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³åº§æ¨™ç³»ã«æˆ»ã™
+			m_Vel = m_Vel + floorVel;
+			// ãƒœãƒ¼ãƒ«ã®ä½ç½®ã‚’è¡çªã®ç¬é–“ã¸æˆ»ã™
+			m_Pos = p + (m_Radius * N);
+			// ãƒœãƒ¼ãƒ«ã®åº§æ¨™ã‚’æ”¾ç‰©ç·šåº§æ¨™ç³»ã‹ã‚‰ã€ã‚·ãƒŸãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³åº§æ¨™ç³»ã¸æˆ»ã™
+			m_Pos = m_Pos + floorOffset;
 
-			// Õ“ËƒGƒlƒ‹ƒM[‚ÌŒvZ
+			// è¡çªã‚¨ãƒãƒ«ã‚®ãƒ¼ã®è¨ˆç®—
 			{
 				Vector2f V = m_Vel - m_baseVel;
-				sm_Ft = sm_Ft + m_Mass * V; // ƒGƒlƒ‹ƒM[—Ê[N]‚ğ“ü‚ê‚é
+				sm_Ft = sm_Ft + m_Mass * V; // ã‚¨ãƒãƒ«ã‚®ãƒ¼é‡[N]ã‚’å…¥ã‚Œã‚‹
 			}
 		}
 	}
 
-	// •Ç‚Æ‚ÌÕ“Ë”»’è
-	if (maxPos <= (m_Pos.x + m_Radius))
+	// å£ã¨ã®è¡çªåˆ¤å®š
+	if ((maxPos + floorOffset.x) <= (m_Pos.x + m_Radius))
 	{
-		m_Vel.x = -m_Vel.x;
-		m_Pos.x = maxPos - m_Radius;
+		m_Vel.x = ((-m_Vel.x + floorVel.x) * sm_ReflectionCoef) + floorVel.x;
+		m_Pos.x = (maxPos + floorOffset.x) - m_Radius;
 	}
 
-	if ((m_Pos.x - m_Radius) <= -maxPos)
+	if ((m_Pos.x - m_Radius) <= -(maxPos - floorOffset.x))
 	{
-		m_Vel.x = -m_Vel.x;
-		m_Pos.x = -maxPos + m_Radius;
+		m_Vel.x = ((-m_Vel.x + floorVel.x) * sm_ReflectionCoef) + floorVel.x;
+		m_Pos.x = -(maxPos - floorOffset.x) + m_Radius;
 	}
 }
 
 void CBall::draw(QPainter &painter)
 {
-	// ’PˆÊ•ÏŠ·
+	// å˜ä½å¤‰æ›
 	int r = m_Radius * 1000;
 	Vector2 position{ (int)(m_Pos.x * 1000), (int)(m_Pos.y * 1000) };
-	// •`‰æ
+	// æç”»
 	painter.setPen(QPen(col, 2, Qt::SolidLine, Qt::FlatCap));
 	painter.drawEllipse((position.x - r), (position.y - r), r * 2, r * 2);
 	//painter.drawRect(m_Rect.minX * 1000, m_Rect.minY * 1000, (m_Rect.maxX - m_Rect.minX) * 1000, (m_Rect.maxY - m_Rect.minY) * 1000);
@@ -199,7 +212,7 @@ void CBall::draw(QPainter &painter)
 
 void CBall::setInitialValue(Vector2f initialPos, Vector2f speed)
 {
-	// ‘ã“ü
+	// ä»£å…¥
 	m_Pos = initialPos;
 	m_Vel = speed;
 }

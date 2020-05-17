@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #define FLOAT_T double
 
 class Vector2
@@ -11,23 +11,23 @@ public:
 class Vector2f
 {
 public:
-	// “ñ“_ŠÔ‚Ì‹——£‚ğ‹‚ß‚é
+	// äºŒç‚¹é–“ã®è·é›¢ã‚’æ±‚ã‚ã‚‹
 	FLOAT_T GetDistance(Vector2f &vt);
 
-	// ƒxƒNƒgƒ‹‚Ì’·‚³‚ğ1‚É‚·‚é
+	// ãƒ™ã‚¯ãƒˆãƒ«ã®é•·ã•ã‚’1ã«ã™ã‚‹
 	FLOAT_T GetLength();
 
-	// ’·‚³‚ğ‚»‚ë‚¦‚é
+	// é•·ã•ã‚’ãã‚ãˆã‚‹
 	Vector2f normalize();
 
-	// “àÏ
+	// å†…ç©
 	FLOAT_T dot(const Vector2f &v) const
 	{
 		return (x * v.x) + (y * v.y);
 	}
 
-	// this ‚ğ–@ü‚Æ‚µ‚½ƒxƒNƒgƒ‹‚Ì”½Ë
-	// this ‚Í’·‚³1.0‚É³‹K‰»‚³‚ê‚Ä‚¢‚é‘O’ñ
+	// this ã‚’æ³•ç·šã¨ã—ãŸãƒ™ã‚¯ãƒˆãƒ«ã®åå°„
+	// this ã¯é•·ã•1.0ã«æ­£è¦åŒ–ã•ã‚Œã¦ã„ã‚‹å‰æ
 	Vector2f reflect(const Vector2f v) const
 	{
 		Vector2f r = v - 2.0f * this->dot(v) * (*this);
@@ -67,16 +67,16 @@ public:
 class Rect
 {
 public:
-	// Rect ‚ğ‹ó‚É‚·‚é
+	// Rect ã‚’ç©ºã«ã™ã‚‹
 	void Empty(void);
 
-	// Rect ‚ª‹ó‚©”»’è‚·‚é
+	// Rect ãŒç©ºã‹åˆ¤å®šã™ã‚‹
 	bool isEmpty(void);
 
-	// Rect ‚ğ‹…‚ÅŠg’£‚·‚é
+	// Rect ã‚’çƒã§æ‹¡å¼µã™ã‚‹
 	void Expand(Vector2f &pos, FLOAT_T r);
 
-	// Rect “¯m‚ªd‚È‚Á‚Ä‚¢‚é‚©”»’è
+	// Rect åŒå£«ãŒé‡ãªã£ã¦ã„ã‚‹ã‹åˆ¤å®š
 	bool isOverlapped(Rect &rect);
 
 public:

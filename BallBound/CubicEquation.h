@@ -1,10 +1,10 @@
-#pragma once
+ï»¿#pragma once
 
-/// OŸ•û’ö®‚ğ‰ğ‚­
-/// \param c3 OŸ€ŒW”
-/// \param c2 “ñŸ€ŒW”
-/// \param c1 ˆêŸ€ŒW”
-/// \param c0 ’è”€ŒW”
-/// \param xR [out] À”‰ğ[3]
-/// \param xI [out] ‹•”‰ğ[3]
+/// ä¸‰æ¬¡æ–¹ç¨‹å¼ã‚’è§£ã
+/// \param c3 ä¸‰æ¬¡é …ä¿‚æ•°
+/// \param c2 äºŒæ¬¡é …ä¿‚æ•°
+/// \param c1 ä¸€æ¬¡é …ä¿‚æ•°
+/// \param c0 å®šæ•°é …ä¿‚æ•°
+/// \param xR [out] å®Ÿæ•°è§£[3]
+/// \param xI [out] è™šæ•°è§£[3]
 void cubicEquation(double c3, double c2, double c1, double c0, double *xR, double *xI);

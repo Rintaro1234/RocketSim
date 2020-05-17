@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "variable.h"
 
@@ -12,17 +12,19 @@ class QPainter;
 class CBall
 {
 public:
-	// •`‰æ
+	// æç”»
 	void draw(QPainter &painter);
-	// XV
+	// æ›´æ–°
 	void UpdateMove(FLOAT_T dt);
-	void UpdateCollideWall(FLOAT_T dt, FLOAT_T maxPos, FLOAT_T ParabolaFactor);
+	void UpdateCollideWall(
+		FLOAT_T dt, FLOAT_T maxPos, FLOAT_T ParabolaFactor,
+		Vector2f &floorOffset, Vector2f &floorVel);
 	void UpdateCollideBoll(FLOAT_T dt, CBall &other);
-	// Å‰‚ÌˆÊ’u
+	// æœ€åˆã®ä½ç½®
 	void setInitialValue(Vector2f initialPos, Vector2f speed);
-	// F‚Æ”¼Œa
+	// è‰²ã¨åŠå¾„
 	void setBall(int r, Qt::GlobalColor color, FLOAT_T mass);
-	// —‰º‚ÆˆÚ“®
+	// è½ä¸‹ã¨ç§»å‹•
 	void move(FLOAT_T dt);
 
 	Vector2f m_Pos	  { 0, 0 };
