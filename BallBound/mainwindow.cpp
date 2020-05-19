@@ -120,10 +120,17 @@ void MainWindow::paintEvent(QPaintEvent *)
 		painter.drawLine((-m_maxPos + offsetX), offsetY, (-m_maxPos + offsetX), 2 * m_maxPos + offsetY);
 		painter.drawLine((m_maxPos + offsetX), offsetY, (m_maxPos + offsetX), 2 * m_maxPos + offsetY);
 	}
+	// ボール
 	for (int i = 0; i < _countof(m_balls); i++)
 	{
 		m_balls[i].draw(painter);
 	}
+
+	// FPS
+	painter.setViewport(0, 0, width(), height());
+	painter.setWindow(0, 0, width(), height());
+	painter.setPen(Qt::red);
+	painter.drawText(8, 16, "FPS:" + QString::number(m_fps, 'f', 1));
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -152,6 +159,8 @@ void MainWindow::timerEvent(QTimerEvent *)
 		// 初回ではウィンドウの位置を記録
 		m_initWindowPos = pos();
 		m_FirstUpdate = false;
+		// FPS計測用に、初回の時間を代入
+		m_fpsTime.start();
 	}
 	else
 	{
@@ -162,6 +171,13 @@ void MainWindow::timerEvent(QTimerEvent *)
 	}
 	// 地形コリジョンの移動速度を計算([m/s])
 	Vector2f floorVel = (floorOffset - m_floorOffset0) * (FLOAT_T)(fps);
+
+	// FPS計測用、経過時間を取得
+	int fpsElapsedTime = m_fpsTime.elapsed();
+	if (1000 <= fpsElapsedTime)
+	{
+		m_fpsTime.restart();
+	}
 
 	// ポーズされていないorポーズされている際にスペースが押されたら実行
 	if (!g_Pause || g_StepRun)
@@ -177,7 +193,7 @@ void MainWindow::timerEvent(QTimerEvent *)
 		for (int a = 0; a < stepCount; a++)
 		{
 			// 移動計算(コリジョンは無視)
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
 				m_balls[i].UpdateMove(div_dt);
@@ -185,7 +201,7 @@ void MainWindow::timerEvent(QTimerEvent *)
 			// ボール同士のコリジョン
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
-				//#pragma omp parallel for
+				#pragma omp parallel for
 				for(int j = i + 1; j < _countof(m_balls); j++)
 				{
 					m_balls[i].UpdateCollideBoll(div_dt, m_balls[j]);	
@@ -195,7 +211,7 @@ void MainWindow::timerEvent(QTimerEvent *)
 			// 地形コリジョンのオフセットがある場合には、その移動も細分化する
 			Vector2f co = m_floorOffset0 + (a + 1) * (floorOffset - m_floorOffset0) / stepCount;
 			// 並行実行(マルチスレッド)
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
 				m_balls[i].UpdateCollideWall(div_dt, (FLOAT_T)m_maxPos / 1000.0f, g_ParabolaFactor, co, floorVel);
@@ -206,6 +222,14 @@ void MainWindow::timerEvent(QTimerEvent *)
 
 	// コリジョンのオフセットを次のシミュレーションへ送る
 	m_floorOffset0 = floorOffset;
+
+	// FPS計測
+	if (1000 <= fpsElapsedTime)
+	{
+		m_fps = 1000.0f * (float)m_fpsFrameCounter / (float)fpsElapsedTime;
+		m_fpsFrameCounter = 0;
+	}
+	m_fpsFrameCounter++;
 
 	// デバッグ表示
 	m_frameCounter++;
@@ -219,7 +243,7 @@ void MainWindow::timerEvent(QTimerEvent *)
 		m_frameCounter = 1;
 	}
 
-	// Qtフレームワークに更新を通知
-	update();
+	// 画面を即座に再描画
+	repaint();
 }
 

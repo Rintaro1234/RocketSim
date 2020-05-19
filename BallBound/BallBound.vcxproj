@@ -192,7 +192,9 @@
     <ClCompile Include="CubicEquation.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
-    <ClCompile Include="pattern.cpp" />
+    <ClCompile Include="pattern.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="variable.cpp" />
   </ItemGroup>
   <ItemGroup>

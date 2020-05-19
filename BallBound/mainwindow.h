@@ -33,7 +33,7 @@ protected:
 	int m_maxPos = m_gridSize / 2;
 	int m_frameCounter = 0;
 
-	CBall m_balls[12];
+	CBall m_balls[700];
 
 	// 起動時のウィンドウの位置(ウィンドウドラッグによるコリジョン遊びで参照)
 	QPoint m_initWindowPos{ 0, 0 };
@@ -46,6 +46,13 @@ protected:
 
 	// どの順番でコリジョン処理をするかの表
 	int *m_CollisionTurn;
+
+	// FPS計測用タイマー
+	QTime m_fpsTime;
+	// FPS計測用フレームカウンタ
+	int m_fpsFrameCounter = 0;
+	// FPS計測用、表示FPS値
+	float m_fps = 0.0f;
 
 private:
     Ui::MainWindow *ui;
