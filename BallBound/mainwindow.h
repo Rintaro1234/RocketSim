@@ -33,7 +33,7 @@ protected:
 	int m_maxPos = m_gridSize / 2;
 	int m_frameCounter = 0;
 
-	CBall m_balls[512];
+	CBall m_balls[12];
 
 	// 起動時のウィンドウの位置(ウィンドウドラッグによるコリジョン遊びで参照)
 	QPoint m_initWindowPos{ 0, 0 };
@@ -43,6 +43,9 @@ protected:
 	Vector2f m_floorOffset0{ 0.0f, 0.0f };
 
 	int m_viewportSize = 0;
+
+	// どの順番でコリジョン処理をするかの表
+	int *m_CollisionTurn;
 
 private:
     Ui::MainWindow *ui;

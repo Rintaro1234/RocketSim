@@ -51,7 +51,7 @@ void MainWindow::resetState(void)
 		Vector2f speed{ random(-speedRange, speedRange), 0 };
 		m_balls[i].setInitialValue(Pos, speed);
 		Qt::GlobalColor color = ColorTable[i % _countof(ColorTable)];
-		m_balls[i].setBall(5, color, 1);
+		m_balls[i].setBall(10, color, 1);
 	}
 	//m_balls[0].setBall(40, ColorTable[0], 4);
 }
@@ -177,6 +177,7 @@ void MainWindow::timerEvent(QTimerEvent *)
 		for (int a = 0; a < stepCount; a++)
 		{
 			// 移動計算(コリジョンは無視)
+			#pragma omp parallel for
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
 				m_balls[i].UpdateMove(div_dt);
@@ -184,6 +185,7 @@ void MainWindow::timerEvent(QTimerEvent *)
 			// ボール同士のコリジョン
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
+				//#pragma omp parallel for
 				for(int j = i + 1; j < _countof(m_balls); j++)
 				{
 					m_balls[i].UpdateCollideBoll(div_dt, m_balls[j]);	
@@ -192,6 +194,8 @@ void MainWindow::timerEvent(QTimerEvent *)
 			// ボールと床のコリジョン
 			// 地形コリジョンのオフセットがある場合には、その移動も細分化する
 			Vector2f co = m_floorOffset0 + (a + 1) * (floorOffset - m_floorOffset0) / stepCount;
+			// 並行実行(マルチスレッド)
+			#pragma omp parallel for
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
 				m_balls[i].UpdateCollideWall(div_dt, (FLOAT_T)m_maxPos / 1000.0f, g_ParabolaFactor, co, floorVel);
