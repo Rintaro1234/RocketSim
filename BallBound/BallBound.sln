@@ -5,16 +5,30 @@ VisualStudioVersion = 15.0.28307.1062
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BallBound", "BallBound.vcxproj", "{A53502B3-15F9-3DB4-86AC-1E9A8043BC56}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ParallelTest", "..\ParallelTest\ParallelTest.vcxproj", "{A6C4B7BA-D800-442A-85AB-DE7BB9742498}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{A53502B3-15F9-3DB4-86AC-1E9A8043BC56}.Debug|x64.ActiveCfg = Debug|x64
 		{A53502B3-15F9-3DB4-86AC-1E9A8043BC56}.Debug|x64.Build.0 = Debug|x64
+		{A53502B3-15F9-3DB4-86AC-1E9A8043BC56}.Debug|x86.ActiveCfg = Debug|x64
 		{A53502B3-15F9-3DB4-86AC-1E9A8043BC56}.Release|x64.ActiveCfg = Release|x64
 		{A53502B3-15F9-3DB4-86AC-1E9A8043BC56}.Release|x64.Build.0 = Release|x64
+		{A53502B3-15F9-3DB4-86AC-1E9A8043BC56}.Release|x86.ActiveCfg = Release|x64
+		{A6C4B7BA-D800-442A-85AB-DE7BB9742498}.Debug|x64.ActiveCfg = Debug|x64
+		{A6C4B7BA-D800-442A-85AB-DE7BB9742498}.Debug|x64.Build.0 = Debug|x64
+		{A6C4B7BA-D800-442A-85AB-DE7BB9742498}.Debug|x86.ActiveCfg = Debug|Win32
+		{A6C4B7BA-D800-442A-85AB-DE7BB9742498}.Debug|x86.Build.0 = Debug|Win32
+		{A6C4B7BA-D800-442A-85AB-DE7BB9742498}.Release|x64.ActiveCfg = Release|x64
+		{A6C4B7BA-D800-442A-85AB-DE7BB9742498}.Release|x64.Build.0 = Release|x64
+		{A6C4B7BA-D800-442A-85AB-DE7BB9742498}.Release|x86.ActiveCfg = Release|Win32
+		{A6C4B7BA-D800-442A-85AB-DE7BB9742498}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
