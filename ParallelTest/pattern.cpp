@@ -101,7 +101,7 @@ int main(void)
 		// この並列処理でチェックされる組み合わせを列挙して、
 		for(int y = 0; y < numBalls; y++)
 		{
-			for(int x = 0; x < numBalls; x++)
+			for(int x = y + 1; x < numBalls; x++)
 			{
 				if(CollisionPair[y][x] == k)
 				{
