@@ -203,43 +203,42 @@ int fingCollisionPairSub(int N, int **CollisionPair, int k, int pairNoBase)
 	int maxVal = k;
 
 	// 値を入れていく
+	int p = 0;
+	bool isPairFull = false;
+	while(isPairFull == false)
 	{
-		int p = 0;
-		for (bool isPairFull = false; isPairFull == false;)
+		int maxK = 0;
+		int x = p;
+		for (int i = 0; i < N / 2; i++)
 		{
-			int maxK = 0;
-			int x = p;
-			for (int i = 0; i < N / 2; i++)
-			{
-				// 今から入れようとする値
-				int kk = Wave(1, i);
-				// 次のチェック
-				int Nx;
-				Nx = x + k;
-				if (N <= Nx) Nx = Nx - N;
+			// 今から入れようとする値
+			int kk = Wave(1, i);
+			// 次のチェック
+			int Nx;
+			Nx = x + k;
+			if (N <= Nx) Nx = Nx - N;
 
-				if (pair[Nx] != kk)
-				{
-					pair[x] = kk;
-					if (maxK < kk) maxK = kk;
-				}
-				else
-				{
-					pair[x] = maxK + 1;
-					maxK = maxK + 1;
-					break;
-				}
-				x = Nx;
-			}
-			// 空きがないかチェック
-			isPairFull = true;
-			for (p = 0; p < N; p++)
+			if (pair[Nx] != kk)
 			{
-				if (pair[p] == -1)
-				{
-					isPairFull = false;
-					break;
-				}
+				pair[x] = kk;
+				if (maxK < kk) maxK = kk;
+			}
+			else
+			{
+				pair[x] = maxK + 1;
+				maxK = maxK + 1;
+				break;
+			}
+			x = Nx;
+		}
+		// 空きがないかチェック
+		isPairFull = true;
+		for (p = 0; p < N; p++)
+		{
+			if (pair[p] == -1)
+			{
+				isPairFull = false;
+				break;
 			}
 		}
 	}
