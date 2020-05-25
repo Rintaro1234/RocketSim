@@ -1,10 +1,10 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <string>
 using namespace std;
 
 int Wave(int hz, int i);
 
-// ƒ[ƒ‹l‚ß“ñŒ…‚Ì10i”•¶š—ñ‚ğ•Ô‚·
+// ã‚¼ãƒ­è©°ã‚äºŒæ¡ã®10é€²æ•°æ–‡å­—åˆ—ã‚’è¿”ã™
 string ato2i(int x)
 {
 	string str;
@@ -13,14 +13,14 @@ string ato2i(int x)
 	return str;
 }
 
-// ‰¡²‚Ì‚Í‚İo‚µ‚É‘Î‚·‚éÜ•Ô‚µ‚ğl—¶‚µ‚ÄAƒOƒŠƒbƒh‚ÌƒCƒ“ƒfƒbƒNƒX‚ğ•ÏŠ·‚·‚é
+// æ¨ªè»¸ã®ã¯ã¿å‡ºã—ã«å¯¾ã™ã‚‹æŠ˜è¿”ã—ã‚’è€ƒæ…®ã—ã¦ã€ã‚°ãƒªãƒƒãƒ‰ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’å¤‰æ›ã™ã‚‹
 void GetWrapIndex(int N, int x, int y, int *xx, int *yy)
 {
-	// c‰¡‚Æ‚à‚ÉA—v‘f”NüŠú‚ÅÜ‚è•Ô‚·
+	// ç¸¦æ¨ªã¨ã‚‚ã«ã€è¦ç´ æ•°Nå‘¨æœŸã§æŠ˜ã‚Šè¿”ã™
 	x = (x % N);
 	y = (y % N);
 
-	// ƒOƒŠƒbƒh‚Ìã”¼•ª‚ğw‚·‚æ‚¤‚ÉAƒ‰ƒbƒv‚·‚é
+	// ã‚°ãƒªãƒƒãƒ‰ã®ä¸ŠåŠåˆ†ã‚’æŒ‡ã™ã‚ˆã†ã«ã€ãƒ©ãƒƒãƒ—ã™ã‚‹
 	if(y <= x)
 	{
 		*xx = x;
@@ -33,26 +33,26 @@ void GetWrapIndex(int N, int x, int y, int *xx, int *yy)
 	}
 }
 
-// Î‚ßƒ‰ƒCƒ“‚Ì•À—ñˆ—ƒOƒ‹[ƒv‚ğŒ©‚é‚¯‚é
-// @param N ƒ{[ƒ‹‚Ì”
-// @param CollisionPair[][] ƒRƒŠƒWƒ‡ƒ“”»’è‚ğs‚¤2ŒÂ‚Ìƒ{[ƒ‹‚ÌƒyƒA‚ğ•\‚·A“ñŸŒ³”z—ñ‚ÌƒOƒŠƒbƒh
-// @param k ƒ‰ƒCƒ“æ“ª‚ÌˆÊ’u(xÀ•W)
-// @param pairNo Ÿ‚ÌƒOƒ‹[ƒv”Ô†
-// @return Ÿ‚ÌƒOƒ‹[ƒv”Ô†
+// æ–œã‚ãƒ©ã‚¤ãƒ³ã®ä¸¦åˆ—å‡¦ç†ã‚°ãƒ«ãƒ¼ãƒ—ã‚’è¦‹ã‚‹ã‘ã‚‹
+// @param N ãƒœãƒ¼ãƒ«ã®æ•°
+// @param CollisionPair[][] ã‚³ãƒªã‚¸ãƒ§ãƒ³åˆ¤å®šã‚’è¡Œã†2å€‹ã®ãƒœãƒ¼ãƒ«ã®ãƒšã‚¢ã‚’è¡¨ã™ã€äºŒæ¬¡å…ƒé…åˆ—ã®ã‚°ãƒªãƒƒãƒ‰
+// @param k ãƒ©ã‚¤ãƒ³å…ˆé ­ã®ä½ç½®(xåº§æ¨™)
+// @param pairNo æ¬¡ã®ã‚°ãƒ«ãƒ¼ãƒ—ç•ªå·
+// @return æ¬¡ã®ã‚°ãƒ«ãƒ¼ãƒ—ç•ªå·
 int fingCollisionPairSub(int N, int **CollisionPair, int k, int pairNo);
 
 int main(void)
 {
-	// ƒ`ƒFƒbƒN—p‚Ì•Ï”
-	const int numBalls = 8; // ‹ô”‚Ì‚İ
+	// ãƒã‚§ãƒƒã‚¯ç”¨ã®å¤‰æ•°
+	const int numBalls = 8; // å¶æ•°ã®ã¿
 
-	// ƒRƒŠƒWƒ‡ƒ“”»’è‚ğs‚¤2ŒÂ‚Ìƒ{[ƒ‹‚ÌƒyƒA‚ğA“ñŸŒ³”z—ñ‚ÌƒOƒŠƒbƒh‚Å•\‚·B
-	// •Ï”“à‚Ì”š‚ÍA‰½‰ñ–Ú‚Ì•À—ñˆ—ƒOƒ‹[ƒv‚Å”»’è‚·‚é‚©B
+	// ã‚³ãƒªã‚¸ãƒ§ãƒ³åˆ¤å®šã‚’è¡Œã†2å€‹ã®ãƒœãƒ¼ãƒ«ã®ãƒšã‚¢ã‚’ã€äºŒæ¬¡å…ƒé…åˆ—ã®ã‚°ãƒªãƒƒãƒ‰ã§è¡¨ã™ã€‚
+	// å¤‰æ•°å†…ã®æ•°å­—ã¯ã€ä½•å›ç›®ã®ä¸¦åˆ—å‡¦ç†ã‚°ãƒ«ãƒ¼ãƒ—ã§åˆ¤å®šã™ã‚‹ã‹ã€‚
 	// (CollisionPair[2][3] = 5)
-	// ‚ÍA2”Ô–Ú‚Æ3”Ô–Ú‚Ìƒ{[ƒ‹‚ğA5‰ñ–Ú‚Ì•À—ñˆ—ƒOƒ‹[ƒv‚ÅƒRƒŠƒWƒ‡ƒ“ƒ`ƒFƒbƒN‚·‚éA‚ÌˆÓ–¡B
+	// ã¯ã€2ç•ªç›®ã¨3ç•ªç›®ã®ãƒœãƒ¼ãƒ«ã‚’ã€5å›ç›®ã®ä¸¦åˆ—å‡¦ç†ã‚°ãƒ«ãƒ¼ãƒ—ã§ã‚³ãƒªã‚¸ãƒ§ãƒ³ãƒã‚§ãƒƒã‚¯ã™ã‚‹ã€ã®æ„å‘³ã€‚
 	// Note:
-	// ƒOƒŠƒbƒh‚Ì‘ÎŠp¬•ª‚Íd•¡B‰º”¼•ª‚Íg‚í‚È‚¢B
-	// —á) CollisionPair[4][6] ‚Æ CollisionPair[6][4] ‚Í“¯‚¶ƒyƒABCollisionPair[6][4] ‚Íg‚í‚È‚¢B
+	// ã‚°ãƒªãƒƒãƒ‰ã®å¯¾è§’æˆåˆ†ã¯é‡è¤‡ã€‚ä¸‹åŠåˆ†ã¯ä½¿ã‚ãªã„ã€‚
+	// ä¾‹) CollisionPair[4][6] ã¨ CollisionPair[6][4] ã¯åŒã˜ãƒšã‚¢ã€‚CollisionPair[6][4] ã¯ä½¿ã‚ãªã„ã€‚
 	int **CollisionPair = new int*[numBalls];
 	for (int i = 0; i < numBalls; i++)
 	{
@@ -60,134 +60,19 @@ int main(void)
 		for (int j = 0; j < numBalls; j++) CollisionPair[i][j] = -1;
 	}
 
-	// Î‚ß‚Ìƒ‰ƒCƒ“‚ğ‡‚Éˆ—‚·‚é
+	// æ–œã‚ã®ãƒ©ã‚¤ãƒ³ã‚’é †ã«å‡¦ç†ã™ã‚‹
 	int pairNo = 0;
 	for(int k = 1; k <= numBalls / 2; k++)
 	{
 		pairNo = fingCollisionPairSub(numBalls, CollisionPair, k, pairNo);
 	}
 
-	/*// ‰EÎ‚ß‰º•ûŒü‚É”š‚ğ“ü‚ê‚Ä‚¢‚­
-	int k = 0;
-	int maxk = 0;
-	// ‰½—ñ–Ú‚Ì‚¸‚ê‚©
-	for (int i = 1; i < numBalls / 2; i++)
-	{
-		// x,y(x‚Íƒ{[ƒ‹”‚Ì2”{‚Ü‚Å“ü‚é‰Â”\«‚ ‚è)
-		int x = i;
-		int y = 0;
-		// 1‰ñ–Ú
-		for (int t = 0; t < numBalls / 2; t++)
-		{
-			// kk‚ª‡”Ô‚Ék + 0Ak + 1‚ğŒJ‚è•Ô‚·Bk‚ª‚±‚Ì—ñ‚ÌÅ¬‚Ì’l
-			int kk = k + Wave(1, t);
-			// ‰¡²‚Ì‚Í‚İo‚µ‚É‘Î‚·‚éÜ•Ô‚µ‚ğl—¶‚µ‚ÄAƒOƒŠƒbƒh‚ÌƒCƒ“ƒfƒbƒNƒX‚ğ•ÏŠ·‚·‚é
-			int xx, yy;
-			GetWrapIndex(numBalls, x, y, &xx, &yy);
-			CollisionPair[yy][xx] = kk;
-			if (maxk < kk) maxk = kk;
-			if (CollisionPair[yy][xx] <= kk)
-			{
-				CollisionPair[yy][xx] = kk;
-				if (maxk < kk) maxk = kk;
-			}
-			else
-			{
-				kk = kk + 1;
-				CollisionPair[y][xx] = kk;
-				if (maxk < kk) maxk = kk;
-				break;
-			}
-			y = xx;
-			x = y + i;
-		}
-		// ‹ó‚¢‚Ä‚¢‚éêŠ‚ğ’T‚·
-		x = i;
-		y = 0;
-		for (int p = 1; CollisionPair[y][x] < 0; p++)
-		{
-			x = i + p;
-			y = p;
-		}
-		for (int t = 0; t < numBalls / 2; t++)
-		{
-			// kk‚ª‡”Ô‚Ék + 0Ak + 1‚ğŒJ‚è•Ô‚·Bk‚ª‚±‚Ì—ñ‚ÌÅ¬‚Ì’l
-			int kk = k + Wave(1, t);
-			// ‰¡²‚Ì‚Í‚İo‚µ‚É‘Î‚·‚éÜ•Ô‚µ‚ğl—¶‚µ‚ÄAƒOƒŠƒbƒh‚ÌƒCƒ“ƒfƒbƒNƒX‚ğ•ÏŠ·‚·‚é
-			int xx, yy;
-			GetWrapIndex(numBalls, x, y, &xx, &yy);
-			CollisionPair[yy][xx] = kk;
-			if (maxk < kk) maxk = kk;
-			if (CollisionPair[yy][xx] <= kk)
-			{
-				CollisionPair[yy][xx] = kk;
-				if (maxk < kk) maxk = kk;
-			}
-			else
-			{
-				kk = kk + 1;
-				CollisionPair[y][xx] = kk;
-				if (maxk < kk) maxk = kk;
-				break;
-			}
-			y = xx;
-			x = y + i;
-		}
-		k = maxk + 1;
-	}*/
-
-	// ‰EÎ‚ß‰º•ûŒü‚É”š‚ğ“ü‚ê‚Ä‚¢‚­
-	/*
-	int k = 0;
-	for (int i = 1; (i - 1) < numBalls / 2; i++)
-	{
-		//@“¯‚¶—v‘f‚Ì‘g‚İ‡‚í‚¹‚Í‚¢‚ç‚È‚¢‚½‚ßx²‚ğˆê‚Â‰E‚É‚¸‚ç‚·
-		int xx = i;
-		int yy = 0;
-		for (int j = 0; j < numBalls; j++)
-		{
-			// x•ûŒü‚ğ‚¸‚ç‚µ‚Ä‚¢‚é‚½‚ßA”z—ñˆÈã‚É‘å‚«‚­‚È‚éB
-			// ‚»‚Ìê‡Axx‚Éyy‚ğ‘ã“ü‚µAyy‚ğ0‚É‚·‚éB
-			// ‚»‚¤‚·‚ê‚ÎA‘±‚«‚Ì‘g‚İ‡‚í‚¹‚ª‘‚¯‚éB
-			if (numBalls <= xx)
-			{
-				if (numBalls / 2 < i + 1) break;
-				xx = yy;
-				yy = 0;
-			}
-			if ((i - 1) % 2 == 0)
-			{
-				// Å‰(y = 0)‚Ì—v‘f‚ğ‚Å‚«‚é‚¾‚¯Å‰‚ÉÀs‚µ‚½‚¢‚½‚ß¬‚³‚¢’l‚ğÀs
-				CollisionPair[yy][xx] = k + Wave(1, j);
-			}
-			else
-			{
-				if (i % 4 != 0)
-				{
-					// 2‚Ì”{”‚¸‚ê
-					CollisionPair[yy][xx] = k + Wave(2, j);
-				}
-				else
-				{
-					// 4‚Ì”{”‚¸‚ê
-					CollisionPair[yy][xx] = k + Wave(4, j);
-				}
-			}
-			// Ÿ‚ÌêŠ‚ÖˆÚ“®
-			xx++;
-			yy++;
-		}
-		// 1‚¸‚ê‚ ‚½‚è2i‚Ş‚½‚ß{2‚·‚é
-		k = k + 2;
-	}
-	*/
-
-	// Šm”F
-	// 1. ‘S‚Ä‚Ìƒ{[ƒ‹‚Ì‘g‚İ‡‚í‚¹‚ªƒRƒŠƒWƒ‡ƒ“ƒ`ƒFƒbƒN‚³‚ê‚Ä‚¢‚é‚©B
+	// ç¢ºèª
+	// 1. å…¨ã¦ã®ãƒœãƒ¼ãƒ«ã®çµ„ã¿åˆã‚ã›ãŒã‚³ãƒªã‚¸ãƒ§ãƒ³ãƒã‚§ãƒƒã‚¯ã•ã‚Œã¦ã„ã‚‹ã‹ã€‚
 	// Note:
-	// ƒOƒŠƒbƒh‚Ì‘S‚Ä‚ÉA‰½‰ñ–Ú‚Ì•À—ñˆ—‚Åƒ`ƒFƒbƒN‚³‚ê‚é‚©‚Ì’l‚ª“ü‚Á‚Ä‚¢‚ê‚ÎOKB
-	// (-1 ‚ÍÀs‚³‚ê‚È‚¢‚±‚Æ‚ğ•\‚·B)
-	// ‚Â‚¢‚Å‚É•À—ñˆ—‚ÌÀs‰ñ”‚à’²‚×‚éB
+	// ã‚°ãƒªãƒƒãƒ‰ã®å…¨ã¦ã«ã€ä½•å›ç›®ã®ä¸¦åˆ—å‡¦ç†ã§ãƒã‚§ãƒƒã‚¯ã•ã‚Œã‚‹ã‹ã®å€¤ãŒå…¥ã£ã¦ã„ã‚Œã°OKã€‚
+	// (-1 ã¯å®Ÿè¡Œã•ã‚Œãªã„ã“ã¨ã‚’è¡¨ã™ã€‚)
+	// ã¤ã„ã§ã«ä¸¦åˆ—å‡¦ç†ã®å®Ÿè¡Œå›æ•°ã‚‚èª¿ã¹ã‚‹ã€‚
 	bool ok = true;
 	int lastParallelNo = 0;
 	for(int y = 0; y < numBalls; y++)
@@ -196,7 +81,7 @@ int main(void)
 		{
 			if(CollisionPair[y][x] == -1)
 			{
-				cout << "Error:Às‚³‚ê‚È‚¢‘g‚İ‡‚í‚¹BBall#" << y << " - #" << x << endl;
+				cout << "Error:å®Ÿè¡Œã•ã‚Œãªã„çµ„ã¿åˆã‚ã›ã€‚Ball#" << y << " - #" << x << endl;
 				ok = false;
 			}
 			if(lastParallelNo < CollisionPair[y][x])
@@ -205,33 +90,33 @@ int main(void)
 			}
 		}
 	}
-	// 2. ˆê‰ñ‚Ì•À—ñˆ—ƒOƒ‹[ƒv‚ÅAˆê‚Â‚Ìƒ{[ƒ‹‚ª2‰ñˆÈãƒ`ƒFƒbƒN‚³‚ê‚Ä‚¢‚½‚çƒGƒ‰[
-	// ƒ`ƒFƒbƒN—pƒtƒ‰ƒO•Ï”g‚¤
+	// 2. ä¸€å›ã®ä¸¦åˆ—å‡¦ç†ã‚°ãƒ«ãƒ¼ãƒ—ã§ã€ä¸€ã¤ã®ãƒœãƒ¼ãƒ«ãŒ2å›ä»¥ä¸Šãƒã‚§ãƒƒã‚¯ã•ã‚Œã¦ã„ãŸã‚‰ã‚¨ãƒ©ãƒ¼
+	// ãƒã‚§ãƒƒã‚¯ç”¨ãƒ•ãƒ©ã‚°å¤‰æ•°ä½¿ã†
 	bool *Checked = new bool [numBalls];
 	for(int k = 0; k <= lastParallelNo; k++)
 	{
-		// ƒ`ƒFƒbƒNÏ‚İƒtƒ‰ƒO‚ğƒŠƒZƒbƒg
+		// ãƒã‚§ãƒƒã‚¯æ¸ˆã¿ãƒ•ãƒ©ã‚°ã‚’ãƒªã‚»ãƒƒãƒˆ
 		for (int i = 0; i < numBalls; i++) Checked[i] = false;
 
-		// ‚±‚Ì•À—ñˆ—‚Åƒ`ƒFƒbƒN‚³‚ê‚é‘g‚İ‡‚í‚¹‚ğ—ñ‹“‚µ‚ÄA
+		// ã“ã®ä¸¦åˆ—å‡¦ç†ã§ãƒã‚§ãƒƒã‚¯ã•ã‚Œã‚‹çµ„ã¿åˆã‚ã›ã‚’åˆ—æŒ™ã—ã¦ã€
 		for(int y = 0; y < numBalls; y++)
 		{
 			for(int x = 0; x < numBalls; x++)
 			{
 				if(CollisionPair[y][x] == k)
 				{
-					// ‚±‚Ì•À—ñˆ—‚Å‚·‚Å‚Éƒ`ƒFƒbƒNÏ‚İ‚Å‚ ‚ê‚ÎƒGƒ‰[
+					// ã“ã®ä¸¦åˆ—å‡¦ç†ã§ã™ã§ã«ãƒã‚§ãƒƒã‚¯æ¸ˆã¿ã§ã‚ã‚Œã°ã‚¨ãƒ©ãƒ¼
 					if(Checked[y])
 					{
-						cout << "Error:" << k << "‰ñ–Ú‚Ì•À—ñˆ—“à‚Å•¡”‰ñQÆBBall#" << y << endl;
+						cout << "Error:" << k << "å›ç›®ã®ä¸¦åˆ—å‡¦ç†å†…ã§è¤‡æ•°å›å‚ç…§ã€‚Ball#" << y << endl;
 						ok = false;
 					}
 					if (Checked[x])
 					{
-						cout << "Error:" << k << "‰ñ–Ú‚Ì•À—ñˆ—“à‚Å•¡”‰ñQÆBBall#" << x << endl;
+						cout << "Error:" << k << "å›ç›®ã®ä¸¦åˆ—å‡¦ç†å†…ã§è¤‡æ•°å›å‚ç…§ã€‚Ball#" << x << endl;
 						ok = false;
 					}
-					// ƒ`ƒFƒbƒNÏ‚İ‚Å‚ ‚é‚±‚Æ‚ğƒ}[ƒN
+					// ãƒã‚§ãƒƒã‚¯æ¸ˆã¿ã§ã‚ã‚‹ã“ã¨ã‚’ãƒãƒ¼ã‚¯
 					Checked[y] = Checked[x] = true;
 				}
 			}
@@ -239,12 +124,12 @@ int main(void)
 	}
 	delete[] Checked;
 
-	// •\¦
+	// è¡¨ç¤º
 	if(ok)
 	{
-		cout << "¬Œ÷I" << endl;
+		cout << "æˆåŠŸï¼" << endl;
 	}
-	// ƒOƒŠƒbƒh•\¦(c‰¡ƒwƒbƒ_•t‚«)
+	// ã‚°ãƒªãƒƒãƒ‰è¡¨ç¤º(ç¸¦æ¨ªãƒ˜ãƒƒãƒ€ä»˜ã)
 	cout << "   ";
 	for (int x = 0; x < numBalls; x++)
 	{
@@ -279,7 +164,7 @@ int main(void)
 		cout << endl;
 	}
 
-	// ƒƒ‚ƒŠŠJ•ú
+	// ãƒ¡ãƒ¢ãƒªé–‹æ”¾
 	for (int y = 0; y < numBalls; y++)
 	{
 		delete [] CollisionPair[y];
@@ -287,29 +172,29 @@ int main(void)
 	delete [] CollisionPair;
 }
 
-// ‘‰Á‚·‚éƒCƒ“ƒfƒbƒNƒX‚É‘Î‚µ‚ÄüŠú“I‚È‹éŒ`”g(0‚Æ1)‚ğ•Ô‚·•Ï”
-// @param L 0‚à‚µ‚­‚Í1‚ª˜A‘±‚·‚é”
-// @param i ƒCƒ“ƒfƒbƒNƒX
+// å¢—åŠ ã™ã‚‹ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã«å¯¾ã—ã¦å‘¨æœŸçš„ãªçŸ©å½¢æ³¢(0ã¨1)ã‚’è¿”ã™å¤‰æ•°
+// @param L 0ã‚‚ã—ãã¯1ãŒé€£ç¶šã™ã‚‹æ•°
+// @param i ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹
 int Wave(int L, int i)
 {
-	// ‹éŒ`”g‚ÌüŠú‚Í 2L ‚È‚Ì‚ÅA‚»‚Ì”ÍˆÍ‚ÉÜ‚è•Ô‚·B
+	// çŸ©å½¢æ³¢ã®å‘¨æœŸã¯ 2L ãªã®ã§ã€ãã®ç¯„å›²ã«æŠ˜ã‚Šè¿”ã™ã€‚
 	i = i % (L * 2);
-	// ‹éŒ`”g‚Ì‘O”¼(i < L)‚Í0AŒã”¼(L <= i)‚Í1
+	// çŸ©å½¢æ³¢ã®å‰åŠ(i < L)ã¯0ã€å¾ŒåŠ(L <= i)ã¯1
 	return (i < L)? 0: 1;
 }
 
-// Î‚ßƒ‰ƒCƒ“‚Ì•À—ñˆ—ƒOƒ‹[ƒv‚ğŒ©‚é‚¯‚é
-// @param N ƒ{[ƒ‹‚Ì”
-// @param CollisionPair[][] ƒRƒŠƒWƒ‡ƒ“”»’è‚ğs‚¤2ŒÂ‚Ìƒ{[ƒ‹‚ÌƒyƒA‚ğ•\‚·A“ñŸŒ³”z—ñ‚ÌƒOƒŠƒbƒh
-// @param k ƒ‰ƒCƒ“æ“ª‚ÌˆÊ’u(xÀ•W)
-// @param pairNoBase Ÿ‚ÌƒOƒ‹[ƒv”Ô†
-// @return Ÿ‚ÌƒOƒ‹[ƒv”Ô†
+// æ–œã‚ãƒ©ã‚¤ãƒ³ã®ä¸¦åˆ—å‡¦ç†ã‚°ãƒ«ãƒ¼ãƒ—ã‚’è¦‹ã‚‹ã‘ã‚‹
+// @param N ãƒœãƒ¼ãƒ«ã®æ•°
+// @param CollisionPair[][] ã‚³ãƒªã‚¸ãƒ§ãƒ³åˆ¤å®šã‚’è¡Œã†2å€‹ã®ãƒœãƒ¼ãƒ«ã®ãƒšã‚¢ã‚’è¡¨ã™ã€äºŒæ¬¡å…ƒé…åˆ—ã®ã‚°ãƒªãƒƒãƒ‰
+// @param k ãƒ©ã‚¤ãƒ³å…ˆé ­ã®ä½ç½®(xåº§æ¨™)
+// @param pairNoBase æ¬¡ã®ã‚°ãƒ«ãƒ¼ãƒ—ç•ªå·
+// @return æ¬¡ã®ã‚°ãƒ«ãƒ¼ãƒ—ç•ªå·
 int fingCollisionPairSub(int N, int **CollisionPair, int k, int pairNoBase)
 {
-	// ˆê‰ñˆêŸŒ³ã‚É‡”Ô‚ğ“ü‚ê‚Ä‚©‚ç•\‚É‘ã“ü‚·‚é
+	// ä¸€å›ä¸€æ¬¡å…ƒä¸Šã«é †ç•ªã‚’å…¥ã‚Œã¦ã‹ã‚‰è¡¨ã«ä»£å…¥ã™ã‚‹
 	int *pair;
 	pair = new int[N];
-	// ‹ó‚É‚·‚é(-1)
+	// ç©ºã«ã™ã‚‹(-1)
 	for (int i = 0; i < N; i++)
 	{
 		pair[i] = -1;
@@ -317,7 +202,7 @@ int fingCollisionPairSub(int N, int **CollisionPair, int k, int pairNoBase)
 
 	int maxVal = k;
 
-	// ’l‚ğ“ü‚ê‚Ä‚¢‚­
+	// å€¤ã‚’å…¥ã‚Œã¦ã„ã
 	{
 		int p = 0;
 		for (bool isPairFull = false; isPairFull == false;)
@@ -326,9 +211,9 @@ int fingCollisionPairSub(int N, int **CollisionPair, int k, int pairNoBase)
 			int x = p;
 			for (int i = 0; i < N / 2; i++)
 			{
-				// ¡‚©‚ç“ü‚ê‚æ‚¤‚Æ‚·‚é’l
+				// ä»Šã‹ã‚‰å…¥ã‚Œã‚ˆã†ã¨ã™ã‚‹å€¤
 				int kk = Wave(1, i);
-				// Ÿ‚Ìƒ`ƒFƒbƒN
+				// æ¬¡ã®ãƒã‚§ãƒƒã‚¯
 				int Nx;
 				Nx = x + k;
 				if (N <= Nx) Nx = Nx - N;
@@ -346,7 +231,7 @@ int fingCollisionPairSub(int N, int **CollisionPair, int k, int pairNoBase)
 				}
 				x = Nx;
 			}
-			// ‹ó‚«‚ª‚È‚¢‚©ƒ`ƒFƒbƒN
+			// ç©ºããŒãªã„ã‹ãƒã‚§ãƒƒã‚¯
 			isPairFull = true;
 			for (p = 0; p < N; p++)
 			{
@@ -358,13 +243,13 @@ int fingCollisionPairSub(int N, int **CollisionPair, int k, int pairNoBase)
 			}
 		}
 	}
-	// x‚©‚çy‚ğ‹‚ßA‚»‚±‚Éˆê”z—ñ‚Ìî•ñ‚ğ“ü‚ê‚Ä‚¢‚­
+	// xã‹ã‚‰yã‚’æ±‚ã‚ã€ãã“ã«ä¸€æ™‚é…åˆ—ã®æƒ…å ±ã‚’å…¥ã‚Œã¦ã„ã
 	int x = k - 1, y = 0;
 	for (int i = 0; i < N; i++)
 	{
 		x = x + 1;
 		y = x - k;
-		// ƒ{[ƒ‹‚Ì”‚©‚ç‚ ‚Ó‚ê‚µ‚Ä‚¢‚½ê‡ÄŒvZ
+		// ãƒœãƒ¼ãƒ«ã®æ•°ã‹ã‚‰ã‚ãµã‚Œã—ã¦ã„ãŸå ´åˆå†è¨ˆç®—
 		if (N <= x)
 		{
 			k = N - k;
@@ -377,67 +262,4 @@ int fingCollisionPairSub(int N, int **CollisionPair, int k, int pairNoBase)
 	}
 	delete pair;
 	return maxVal + 1;
-	/*int x = k;
-	int y = 0;
-	int maxPairNo = pairNoBase + 1;
-	for (int i = 0; i < N; i++)
-	{
-		// ƒtƒŠƒbƒv(”gŒ`)‚ğì‚é•Ï”
-		int pairNo = pairNoBase + Wave(1, i);
-		int xx, yy;
-		GetWrapIndex(N, x, y, &xx, &yy);
-		// æ‚ÉŸ‚ÌêŠ‚ğ‘ã“ü‚µ‚Ä‚¨‚­
-		y = x;
-		x = y + k;
-		int Nx, Ny;
-		GetWrapIndex(N, x, y, &Nx, &Ny);
-		if ((CollisionPair[yy][xx] < 0) &&
-		   ((CollisionPair[Ny][Nx] < 0) || (CollisionPair[Ny][Nx] != pairNo)))
-		{
-			// ‚±‚ÌƒyƒA‚Í–¢ƒ`ƒFƒbƒN‚È‚Ì‚ÅA•À—ñˆ—ƒOƒ‹[ƒv‚É’Ç‰Á‚·‚é
-			CollisionPair[yy][xx] = pairNo;
-		}
-		else
-		{
-			// ‚·‚Å‚ÉƒRƒŠƒWƒ‡ƒ“ƒ`ƒFƒbƒNÏ‚İ‚ÌƒyƒA‚É–ß‚Á‚½ê‡
-			CollisionPair[yy][xx] = maxPairNo + 1;
-			maxPairNo = maxPairNo + 1;
-			break;
-		}
-	}
-	// “ñ‰ñ–Ú
-	// ‚Ü‚¾ƒRƒŠƒWƒ‡ƒ“ƒ`ƒFƒbƒN‚ğ‚µ‚Ä‚¢‚È‚¢ƒyƒA‚ğŒ©‚Â‚¯‚é
-	for (int i = 0; i < N; i++)
-	{
-		y = i;
-		x = i + k;
-		int xx, yy;
-		GetWrapIndex(N, x, y, &xx, &yy);
-		if (CollisionPair[yy][xx] < 0) break;
-	}
-	for (int i = 0; i < N; i++)
-	{
-		// ƒtƒŠƒbƒv(”gŒ`)‚ğì‚é•Ï”
-		int pairNo = pairNoBase + Wave(1, i);
-		int xx, yy;
-		GetWrapIndex(N, x, y, &xx, &yy);
-		// æ‚ÉŸ‚ÌêŠ‚ğ‘ã“ü‚µ‚Ä‚¨‚­
-		y = x;
-		x = y + k;
-		int Nx, Ny;
-		GetWrapIndex(N, x, y, &Nx, &Ny);
-		if ((CollisionPair[yy][xx] < 0) &&
-		   ((CollisionPair[Ny][Nx] < 0) || (CollisionPair[Ny][Nx] != pairNo)))
-		{
-			// ‚±‚ÌƒyƒA‚Í–¢ƒ`ƒFƒbƒN‚È‚Ì‚ÅA•À—ñˆ—ƒOƒ‹[ƒv‚É’Ç‰Á‚·‚é
-			CollisionPair[yy][xx] = pairNo;
-		}
-		else
-		{
-			// ‚·‚Å‚ÉƒRƒŠƒWƒ‡ƒ“ƒ`ƒFƒbƒNÏ‚İ‚ÌƒyƒA‚É–ß‚Á‚½ê‡
-			CollisionPair[yy][xx] = maxPairNo;
-			break;
-		}
-	}
-	return maxPairNo + 1;*/
 }
