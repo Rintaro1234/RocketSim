@@ -1,54 +1,177 @@
-#include "iostream"
+#include <iostream>
+#include <string>
 using namespace std;
+
+int Wave(int hz, int i);
+
+// ゼロ詰め二桁の10進数文字列を返す
+string ato2i(int x)
+{
+	string str;
+	if (x < 10) str = "0";
+	str += to_string(x);
+	return str;
+}
+
+// 横軸のはみ出しに対する折返しを考慮して、グリッドのインデックスを変換する
+void GetWrapIndex(int N, int x, int y, int *xx, int *yy)
+{
+	// 縦横ともに、要素数N周期で折り返す
+	x = (x % N);
+	y = (y % N);
+
+	// グリッドの上半分を指すように、ラップする
+	if(y <= x)
+	{
+		*xx = x;
+		*yy = y;
+	}
+	else
+	{
+		*xx = y;
+		*yy = x;
+	}
+}
+
+// 斜めラインの並列処理グループを見るける
+// @param N ボールの数
+// @param CollisionPair[][] コリジョン判定を行う2個のボールのペアを表す、二次元配列のグリッド
+// @param k ライン先頭の位置(x座標)
+// @param pairNo 次のグループ番号
+// @return 次のグループ番号
+int fingCollisionPairSub(int N, int **CollisionPair, int k, int pairNo);
 
 int main(void)
 {
-	int **CollisionTurns;
-	int BullNumber = 4; // 偶数のみ
+	// チェック用の変数
+	const int numBalls = 8; // 偶数のみ
 
-	// y軸上にボールの数だけ配列を作成
-	CollisionTurns = new int*[BullNumber];
-	// x軸上にボールの数だけ配列を作成
-	for (int i = 0; i < BullNumber; i++) 
+	// コリジョン判定を行う2個のボールのペアを、二次元配列のグリッドで表す。
+	// 変数内の数字は、何回目の並列処理グループで判定するか。
+	// (CollisionPair[2][3] = 5)
+	// は、2番目と3番目のボールを、5回目の並列処理グループでコリジョンチェックする、の意味。
+	// Note:
+	// グリッドの対角成分は重複。下半分は使わない。
+	// 例) CollisionPair[4][6] と CollisionPair[6][4] は同じペア。CollisionPair[6][4] は使わない。
+	int **CollisionPair = new int*[numBalls];
+	for (int i = 0; i < numBalls; i++)
 	{
-		CollisionTurns[i] = new int[BullNumber];
+		CollisionPair[i] = new int[numBalls];
+		for (int j = 0; j < numBalls; j++) CollisionPair[i][j] = -1;
 	}
 
-	// 右斜め下方向に数字を入れていく
+	// 斜めのラインを順に処理する
+	int pairNo = 0;
+	for(int k = 1; k <= numBalls / 2; k++)
+	{
+		pairNo = fingCollisionPairSub(numBalls, CollisionPair, k, pairNo);
+	}
+
+	/*// 右斜め下方向に数字を入れていく
 	int k = 0;
-	for (int i = 0; i < BullNumber / 2; i++)
+	int maxk = 0;
+	// 何列目のずれか
+	for (int i = 1; i < numBalls / 2; i++)
+	{
+		// x,y(xはボール数の2倍まで入る可能性あり)
+		int x = i;
+		int y = 0;
+		// 1回目
+		for (int t = 0; t < numBalls / 2; t++)
+		{
+			// kkが順番にk + 0、k + 1を繰り返す。kがこの列の最小の値
+			int kk = k + Wave(1, t);
+			// 横軸のはみ出しに対する折返しを考慮して、グリッドのインデックスを変換する
+			int xx, yy;
+			GetWrapIndex(numBalls, x, y, &xx, &yy);
+			CollisionPair[yy][xx] = kk;
+			if (maxk < kk) maxk = kk;
+			if (CollisionPair[yy][xx] <= kk)
+			{
+				CollisionPair[yy][xx] = kk;
+				if (maxk < kk) maxk = kk;
+			}
+			else
+			{
+				kk = kk + 1;
+				CollisionPair[y][xx] = kk;
+				if (maxk < kk) maxk = kk;
+				break;
+			}
+			y = xx;
+			x = y + i;
+		}
+		// 空いている場所を探す
+		x = i;
+		y = 0;
+		for (int p = 1; CollisionPair[y][x] < 0; p++)
+		{
+			x = i + p;
+			y = p;
+		}
+		for (int t = 0; t < numBalls / 2; t++)
+		{
+			// kkが順番にk + 0、k + 1を繰り返す。kがこの列の最小の値
+			int kk = k + Wave(1, t);
+			// 横軸のはみ出しに対する折返しを考慮して、グリッドのインデックスを変換する
+			int xx, yy;
+			GetWrapIndex(numBalls, x, y, &xx, &yy);
+			CollisionPair[yy][xx] = kk;
+			if (maxk < kk) maxk = kk;
+			if (CollisionPair[yy][xx] <= kk)
+			{
+				CollisionPair[yy][xx] = kk;
+				if (maxk < kk) maxk = kk;
+			}
+			else
+			{
+				kk = kk + 1;
+				CollisionPair[y][xx] = kk;
+				if (maxk < kk) maxk = kk;
+				break;
+			}
+			y = xx;
+			x = y + i;
+		}
+		k = maxk + 1;
+	}*/
+
+	// 右斜め下方向に数字を入れていく
+	/*
+	int k = 0;
+	for (int i = 1; (i - 1) < numBalls / 2; i++)
 	{
 		//　同じ要素の組み合わせはいらないためx軸を一つ右にずらす
-		int xx = i + 1;
+		int xx = i;
 		int yy = 0;
-		for (int j = 0; j < BullNumber; j++)
+		for (int j = 0; j < numBalls; j++)
 		{
 			// x方向をずらしているため、配列以上に大きくなる。
 			// その場合、xxにyyを代入し、yyを0にする。
 			// そうすれば、続きの組み合わせが書ける。
-			if (BullNumber <= xx)
+			if (numBalls <= xx)
 			{
-				if (BullNumber / 2 < i + 2) break;
+				if (numBalls / 2 < i + 1) break;
 				xx = yy;
 				yy = 0;
 			}
-			// とりあえず偶数ずれのときはテキトーな値を入れとく
-			if (i % 2 == 0)
+			if ((i - 1) % 2 == 0)
 			{
 				// 最初(y = 0)の要素をできるだけ最初に実行したいため小さい値を実行
-				// 周期的にずれるため偶数or奇数で判別
-				if (j % 2 == 0)
-				{
-					CollisionTurns[yy][xx] = k;
-				}
-				else
-				{
-					CollisionTurns[yy][xx] = k + 1;
-				}
+				CollisionPair[yy][xx] = k + Wave(1, j);
 			}
 			else
 			{
-				CollisionTurns[yy][xx] = k;
+				if (i % 4 != 0)
+				{
+					// 2の倍数ずれ
+					CollisionPair[yy][xx] = k + Wave(2, j);
+				}
+				else
+				{
+					// 4の倍数ずれ
+					CollisionPair[yy][xx] = k + Wave(4, j);
+				}
 			}
 			// 次の場所へ移動
 			xx++;
@@ -57,53 +180,264 @@ int main(void)
 		// 1ずれあたり2進むため＋2する
 		k = k + 2;
 	}
+	*/
 
-	// ない部分には取り合ず-1を入れて置き、あとで変換
-	for (int i = 0; i < BullNumber; i++)
+	// 確認
+	// 1. 全てのボールの組み合わせがコリジョンチェックされているか。
+	// Note:
+	// グリッドの全てに、何回目の並列処理でチェックされるかの値が入っていればOK。
+	// (-1 は実行されないことを表す。)
+	// ついでに並列処理の実行回数も調べる。
+	bool ok = true;
+	int lastParallelNo = 0;
+	for(int y = 0; y < numBalls; y++)
 	{
-		CollisionTurns[i][i] = -1;
-	}
-
-	for (int i = 0; i < BullNumber / 2; i++)
-	{
-		int xx = i + 1;
-		int yy = 0;
-		for (int j = 0; j < BullNumber; j++)
+		for(int x = y + 1; x < numBalls; x++)
 		{
-			if (BullNumber <= xx)
+			if(CollisionPair[y][x] == -1)
 			{
-				xx = yy;
-				yy = 0;
+				cout << "Error:実行されない組み合わせ。Ball#" << y << " - #" << x << endl;
+				ok = false;
 			}
-			CollisionTurns[xx][yy] = -1;
-			xx++;
-			yy++;
+			if(lastParallelNo < CollisionPair[y][x])
+			{
+				lastParallelNo = CollisionPair[y][x];
+			}
 		}
 	}
+	// 2. 一回の並列処理グループで、一つのボールが2回以上チェックされていたらエラー
+	// チェック用フラグ変数使う
+	bool *Checked = new bool [numBalls];
+	for(int k = 0; k <= lastParallelNo; k++)
+	{
+		// チェック済みフラグをリセット
+		for (int i = 0; i < numBalls; i++) Checked[i] = false;
+
+		// この並列処理でチェックされる組み合わせを列挙して、
+		for(int y = 0; y < numBalls; y++)
+		{
+			for(int x = 0; x < numBalls; x++)
+			{
+				if(CollisionPair[y][x] == k)
+				{
+					// この並列処理ですでにチェック済みであればエラー
+					if(Checked[y])
+					{
+						cout << "Error:" << k << "回目の並列処理内で複数回参照。Ball#" << y << endl;
+						ok = false;
+					}
+					if (Checked[x])
+					{
+						cout << "Error:" << k << "回目の並列処理内で複数回参照。Ball#" << x << endl;
+						ok = false;
+					}
+					// チェック済みであることをマーク
+					Checked[y] = Checked[x] = true;
+				}
+			}
+		}
+	}
+	delete[] Checked;
 
 	// 表示
-	for (int i = 0; i < BullNumber; i++)
+	if(ok)
 	{
-		for (int j = 0; j < BullNumber; j++)
+		cout << "成功！" << endl;
+	}
+	// グリッド表示(縦横ヘッダ付き)
+	cout << "   ";
+	for (int x = 0; x < numBalls; x++)
+	{
+		cout << ato2i(x) << ".";
+	}
+	cout << endl;
+
+	for (int y = 0; y < numBalls; y++)
+	{
+		cout << ato2i(y) << ":";
+
+		for (int x = 0; x < numBalls; x++)
 		{
-			if (CollisionTurns[i][j] == -1)
+			const int a = CollisionPair[y][x];
+			if(x < y)
 			{
-				cout << "x" << " ,";
+				cout << "   ";
+			}
+			else if(y == x)
+			{
+				cout << " - ";
+			}
+			else if (a == -1)
+			{
+				cout << "xx,";
 			}
 			else
 			{
-				// 二桁以上だと表が見にくくなるため修正(本来不要)
-				if(10 <= CollisionTurns[i][j])cout << CollisionTurns[i][j] << ",";
-				if(CollisionTurns[i][j] < 10)cout << CollisionTurns[i][j] << " ,";
+				cout << ato2i(a) << ",";
 			}
 		}
 		cout << endl;
 	}
 
 	// メモリ開放
-	for (int i = 0; i < BullNumber; i++)
+	for (int y = 0; y < numBalls; y++)
 	{
-		delete [] CollisionTurns[i];
+		delete [] CollisionPair[y];
 	}
-	delete [] CollisionTurns;
+	delete [] CollisionPair;
+}
+
+// 増加するインデックスに対して周期的な矩形波(0と1)を返す変数
+// @param L 0もしくは1が連続する数
+// @param i インデックス
+int Wave(int L, int i)
+{
+	// 矩形波の周期は 2L なので、その範囲に折り返す。
+	i = i % (L * 2);
+	// 矩形波の前半(i < L)は0、後半(L <= i)は1
+	return (i < L)? 0: 1;
+}
+
+// 斜めラインの並列処理グループを見るける
+// @param N ボールの数
+// @param CollisionPair[][] コリジョン判定を行う2個のボールのペアを表す、二次元配列のグリッド
+// @param k ライン先頭の位置(x座標)
+// @param pairNoBase 次のグループ番号
+// @return 次のグループ番号
+int fingCollisionPairSub(int N, int **CollisionPair, int k, int pairNoBase)
+{
+	// 一回一次元上に順番を入れてから表に代入する
+	int *pair;
+	pair = new int[N];
+	// 空にする(-1)
+	for (int i = 0; i < N; i++)
+	{
+		pair[i] = -1;
+	}
+
+	int maxVal = k;
+
+	// 値を入れていく
+	{
+		int p = 0;
+		for (bool isPairFull = false; isPairFull == false;)
+		{
+			int maxK = 0;
+			int x = p;
+			for (int i = 0; i < N / 2; i++)
+			{
+				// 今から入れようとする値
+				int kk = Wave(1, i);
+				// 次のチェック
+				int Nx;
+				Nx = x + k;
+				if (N <= Nx) Nx = Nx - N;
+
+				if (pair[Nx] != kk)
+				{
+					pair[x] = kk;
+					if (maxK < kk) maxK = kk;
+				}
+				else
+				{
+					pair[x] = maxK + 1;
+					maxK = maxK + 1;
+					break;
+				}
+				x = Nx;
+			}
+			// 空きがないかチェック
+			isPairFull = true;
+			for (p = 0; p < N; p++)
+			{
+				if (pair[p] == -1)
+				{
+					isPairFull = false;
+					break;
+				}
+			}
+		}
+	}
+	// xからyを求め、そこに一時配列の情報を入れていく
+	int x = k - 1, y = 0;
+	for (int i = 0; i < N; i++)
+	{
+		x = x + 1;
+		y = x - k;
+		// ボールの数からあふれしていた場合再計算
+		if (N <= x)
+		{
+			k = N - k;
+			x = y;
+			y = x - k;
+		}
+
+		CollisionPair[y][x] = pair[i] + pairNoBase;
+		if (maxVal < pair[i] + pairNoBase) maxVal = pair[i] + pairNoBase;
+	}
+	delete pair;
+	return maxVal + 1;
+	/*int x = k;
+	int y = 0;
+	int maxPairNo = pairNoBase + 1;
+	for (int i = 0; i < N; i++)
+	{
+		// フリップ(波形)を作る変数
+		int pairNo = pairNoBase + Wave(1, i);
+		int xx, yy;
+		GetWrapIndex(N, x, y, &xx, &yy);
+		// 先に次の場所を代入しておく
+		y = x;
+		x = y + k;
+		int Nx, Ny;
+		GetWrapIndex(N, x, y, &Nx, &Ny);
+		if ((CollisionPair[yy][xx] < 0) &&
+		   ((CollisionPair[Ny][Nx] < 0) || (CollisionPair[Ny][Nx] != pairNo)))
+		{
+			// このペアは未チェックなので、並列処理グループに追加する
+			CollisionPair[yy][xx] = pairNo;
+		}
+		else
+		{
+			// すでにコリジョンチェック済みのペアに戻った場合
+			CollisionPair[yy][xx] = maxPairNo + 1;
+			maxPairNo = maxPairNo + 1;
+			break;
+		}
+	}
+	// 二回目
+	// まだコリジョンチェックをしていないペアを見つける
+	for (int i = 0; i < N; i++)
+	{
+		y = i;
+		x = i + k;
+		int xx, yy;
+		GetWrapIndex(N, x, y, &xx, &yy);
+		if (CollisionPair[yy][xx] < 0) break;
+	}
+	for (int i = 0; i < N; i++)
+	{
+		// フリップ(波形)を作る変数
+		int pairNo = pairNoBase + Wave(1, i);
+		int xx, yy;
+		GetWrapIndex(N, x, y, &xx, &yy);
+		// 先に次の場所を代入しておく
+		y = x;
+		x = y + k;
+		int Nx, Ny;
+		GetWrapIndex(N, x, y, &Nx, &Ny);
+		if ((CollisionPair[yy][xx] < 0) &&
+		   ((CollisionPair[Ny][Nx] < 0) || (CollisionPair[Ny][Nx] != pairNo)))
+		{
+			// このペアは未チェックなので、並列処理グループに追加する
+			CollisionPair[yy][xx] = pairNo;
+		}
+		else
+		{
+			// すでにコリジョンチェック済みのペアに戻った場合
+			CollisionPair[yy][xx] = maxPairNo;
+			break;
+		}
+	}
+	return maxPairNo + 1;*/
 }

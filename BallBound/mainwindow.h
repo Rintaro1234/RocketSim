@@ -33,7 +33,7 @@ protected:
 	int m_maxPos = m_gridSize / 2;
 	int m_frameCounter = 0;
 
-	CBall m_balls[700];
+	CBall m_balls[1];
 
 	// 起動時のウィンドウの位置(ウィンドウドラッグによるコリジョン遊びで参照)
 	QPoint m_initWindowPos{ 0, 0 };
