@@ -13,6 +13,20 @@ string ato2i(int x)
 	return str;
 }
 
+// コリジョンをチェックする、2つのボールの組み合わせ
+struct CollisionPair
+{
+	int idx0 = -1;
+	int idx1 = -1;
+};
+
+// 同期無しで並列処理可能な、コリジョンチェックを行うボールの組み合わせのグループ
+struct ParallelGroup
+{
+	CollisionPair *array = nullptr;
+	int numPair = 0;
+};
+
 // 横軸のはみ出しに対する折返しを考慮して、グリッドのインデックスを変換する
 void GetWrapIndex(int N, int x, int y, int *xx, int *yy)
 {
@@ -44,27 +58,27 @@ int fingCollisionPairSub(int N, int **CollisionPair, int k, int pairNo);
 int main(void)
 {
 	// コリジョンチェックを行うボールの数
-	const int numBalls = 16; // 偶数のみ
+	const int numBalls = 18; // 偶数のみ
 
 	// コリジョン判定を行う2個のボールのペアを、二次元配列のグリッドで表す。
 	// 変数内の数字は、何回目の並列処理グループで判定するか。
-	// (CollisionPair[2][3] = 5)
+	// (CollisionPairTable[2][3] = 5)
 	// は、2番目と3番目のボールを、5回目の並列処理グループでコリジョンチェックする、の意味。
 	// Note:
 	// グリッドの対角成分は重複。下半分は使わない。
-	// 例) CollisionPair[4][6] と CollisionPair[6][4] は同じペア。CollisionPair[6][4] は使わない。
-	int **CollisionPair = new int*[numBalls];
+	// 例) CollisionPairTable[4][6] と CollisionPairTable[6][4] は同じペア。CollisionPairTable[6][4] は使わない。
+	int **CollisionPairTable = new int*[numBalls];
 	for (int i = 0; i < numBalls; i++)
 	{
-		CollisionPair[i] = new int[numBalls];
-		for (int j = 0; j < numBalls; j++) CollisionPair[i][j] = -1;
+		CollisionPairTable[i] = new int[numBalls];
+		for (int j = 0; j < numBalls; j++) CollisionPairTable[i][j] = -1;
 	}
 
 	// 斜めのラインを順に処理する
 	int pairNo = 0;
 	for(int k = 1; k <= numBalls / 2; k++)
 	{
-		pairNo = fingCollisionPairSub(numBalls, CollisionPair, k, pairNo);
+		pairNo = fingCollisionPairSub(numBalls, CollisionPairTable, k, pairNo);
 	}
 
 	// 確認
@@ -79,14 +93,14 @@ int main(void)
 	{
 		for(int x = y + 1; x < numBalls; x++)
 		{
-			if(CollisionPair[y][x] == -1)
+			if(CollisionPairTable[y][x] == -1)
 			{
 				cout << "Error:実行されない組み合わせ。Ball#" << y << " - #" << x << endl;
 				ok = false;
 			}
-			if(lastParallelNo < CollisionPair[y][x])
+			if(lastParallelNo < CollisionPairTable[y][x])
 			{
-				lastParallelNo = CollisionPair[y][x];
+				lastParallelNo = CollisionPairTable[y][x];
 			}
 		}
 	}
@@ -103,7 +117,7 @@ int main(void)
 		{
 			for(int x = y + 1; x < numBalls; x++)
 			{
-				if(CollisionPair[y][x] == k)
+				if(CollisionPairTable[y][x] == k)
 				{
 					// この並列処理ですでにチェック済みであればエラー
 					if(Checked[y])
@@ -149,7 +163,7 @@ int main(void)
 
 		for (int x = 0; x < numBalls; x++)
 		{
-			const int a = CollisionPair[y][x];
+			const int a = CollisionPairTable[y][x];
 			if(x < y)
 			{
 				cout << "   ";
@@ -170,12 +184,58 @@ int main(void)
 		cout << endl;
 	}
 
+	// 実際に使えるように変換
+	ParallelGroup *parallelGroup = new ParallelGroup[pairNo];
+	for (int i = 0; i < pairNo; i++) 
+	{
+		// 並行処理できるペアの数
+		int groupNo = 0;
+
+		// 並行処理できるペアの数を調べる
+		for (int x = 0; x < numBalls; x++)
+		{
+			for (int y = 0; y < numBalls; y++)
+			{
+				if (CollisionPairTable[y][x] == i) groupNo++;
+			}
+		}
+		parallelGroup[i].array = new CollisionPair[groupNo];
+		parallelGroup[i].numPair = groupNo;
+		// ペアを入れていく
+		for (int a = 0; a < groupNo;)
+		{
+			for (int x = 0; x < numBalls; x++)
+			{
+				for (int y = 0; y < numBalls; y++)
+				{
+					if (CollisionPairTable[y][x] == i)
+					{
+						parallelGroup[i].array[a].idx0 = x;
+						parallelGroup[i].array[a].idx1 = y;
+						a++;
+					}
+				}
+			}
+		}
+	}
+
+	// 確認
+	for (int i = 0; i < pairNo; i++)
+	{
+		cout << ato2i(i) << "| ";
+		for (int j = 0; j < parallelGroup[i].numPair; j++)
+		{
+			cout << ato2i(parallelGroup[i].array[j].idx1) << "-" << ato2i(parallelGroup[i].array[j].idx0) << ", ";
+		}
+		cout << endl;
+	}
+
 	// メモリ開放
 	for (int y = 0; y < numBalls; y++)
 	{
-		delete [] CollisionPair[y];
+		delete [] CollisionPairTable[y];
 	}
-	delete [] CollisionPair;
+	delete [] CollisionPairTable;
 }
 
 // 増加するインデックスに対して周期的な矩形波(0と1)を返す変数
