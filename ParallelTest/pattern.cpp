@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <string>
+#include <algorithm>
 using namespace std;
 
 int Wave(int hz, int i);
@@ -20,6 +21,7 @@ struct CollisionPair
 	int idx1 = -1;
 };
 
+//-----------------------------------------------------------------------------
 // 同期無しで並列処理可能な、コリジョンチェックを行うボールの組み合わせのグループ
 struct ParallelGroup
 {
@@ -27,6 +29,7 @@ struct ParallelGroup
 	int numPair = 0;
 };
 
+//-----------------------------------------------------------------------------
 // 横軸のはみ出しに対する折返しを考慮して、グリッドのインデックスを変換する
 void GetWrapIndex(int N, int x, int y, int *xx, int *yy)
 {
@@ -47,14 +50,37 @@ void GetWrapIndex(int N, int x, int y, int *xx, int *yy)
 	}
 }
 
+//-----------------------------------------------------------------------------
 // 斜めラインの並列処理グループを見るける
 // @param N ボールの数
-// @param CollisionPair[][] コリジョン判定を行う2個のボールのペアを表す、二次元配列のグリッド
+// @param CollisionPairTable[][] コリジョン判定を行う2個のボールのペアを表す、二次元配列のグリッド
 // @param k ライン先頭の位置(x座標)
 // @param pairNo 次のグループ番号
 // @return 次のグループ番号
-int fingCollisionPairSub(int N, int **CollisionPair, int k, int pairNo);
+int fingCollisionPairSub(int N, int **CollisionPairTable, int k, int pairNo);
 
+// テスト
+// @param numBalls ボールの数
+// @param CollisionPairTable[][] コリジョン判定を行う2個のボールのペアを表す、二次元配列のグリッド
+bool checkCollisionPairTable(const int numBalls, const int *const *CollisionPairTable);
+
+// 表示
+// @param numBalls ボールの数
+// @param CollisionPairTable[][] コリジョン判定を行う2個のボールのペアを表す、二次元配列のグリッド
+void printCollisionPairTable(const int numBalls, const int *const *CollisionPairTable);
+
+// テスト
+// @param numBalls ボールの数
+// @param numGroups グループの数
+// @param groups グループの配列
+bool checkParallelGroup(const int numBalls, const int numGroups, const ParallelGroup *groups);
+
+// 表示
+// @param numGroups グループの数
+// @param groups グループの配列
+void printParallelGroup(const int numGroups, const ParallelGroup *groups);
+
+//-----------------------------------------------------------------------------
 int main(void)
 {
 	// コリジョンチェックを行うボールの数
@@ -75,118 +101,25 @@ int main(void)
 	}
 
 	// 斜めのラインを順に処理する
-	int pairNo = 0;
+	int numGroup = 0;
 	for(int k = 1; k <= numBalls / 2; k++)
 	{
-		pairNo = fingCollisionPairSub(numBalls, CollisionPairTable, k, pairNo);
+		numGroup = fingCollisionPairSub(numBalls, CollisionPairTable, k, numGroup);
 	}
 
 	// 確認
-	// 1. 全てのボールの組み合わせがコリジョンチェックされているか。
-	// Note:
-	// グリッドの全てに、何回目の並列処理でチェックされるかの値が入っていればOK。
-	// (-1 は実行されないことを表す。)
-	// ついでに並列処理の実行回数も調べる。
-	bool ok = true;
-	int lastParallelNo = 0;
-	for(int y = 0; y < numBalls; y++)
-	{
-		for(int x = y + 1; x < numBalls; x++)
-		{
-			if(CollisionPairTable[y][x] == -1)
-			{
-				cout << "Error:実行されない組み合わせ。Ball#" << y << " - #" << x << endl;
-				ok = false;
-			}
-			if(lastParallelNo < CollisionPairTable[y][x])
-			{
-				lastParallelNo = CollisionPairTable[y][x];
-			}
-		}
-	}
-	// 2. 一回の並列処理グループで、一つのボールが2回以上チェックされていたらエラー
-	// チェック用フラグ変数使う
-	bool *Checked = new bool [numBalls];
-	for(int k = 0; k <= lastParallelNo; k++)
-	{
-		// チェック済みフラグをリセット
-		for (int i = 0; i < numBalls; i++) Checked[i] = false;
-
-		// この並列処理でチェックされる組み合わせを列挙して、
-		for(int y = 0; y < numBalls; y++)
-		{
-			for(int x = y + 1; x < numBalls; x++)
-			{
-				if(CollisionPairTable[y][x] == k)
-				{
-					// この並列処理ですでにチェック済みであればエラー
-					if(Checked[y])
-					{
-						cout << "Error:" << k << "回目の並列処理内で複数回参照。Ball#" << y << endl;
-						ok = false;
-					}
-					if (Checked[x])
-					{
-						cout << "Error:" << k << "回目の並列処理内で複数回参照。Ball#" << x << endl;
-						ok = false;
-					}
-					// チェック済みであることをマーク
-					Checked[y] = Checked[x] = true;
-				}
-			}
-		}
-	}
-	delete[] Checked;
+	bool ok = checkCollisionPairTable(numBalls, CollisionPairTable);
 
 	// 表示
 	if(ok)
 	{
 		cout << "成功！" << endl;
 	}
-	// グリッド表示(縦横ヘッダ付き)
-	cout << "  |";
-	for (int x = 0; x < numBalls; x++)
-	{
-		cout << ato2i(x) << ".";
-	}
-	cout << endl;
-	cout << "--+";
-	for (int x = 0; x < numBalls; x++)
-	{
-		cout << "---";
-	}
-	cout << endl;
-
-	for (int y = 0; y < numBalls; y++)
-	{
-		cout << ato2i(y) << "|";
-
-		for (int x = 0; x < numBalls; x++)
-		{
-			const int a = CollisionPairTable[y][x];
-			if(x < y)
-			{
-				cout << "   ";
-			}
-			else if(y == x)
-			{
-				cout << " - ";
-			}
-			else if (a == -1)
-			{
-				cout << "xx,";
-			}
-			else
-			{
-				cout << ato2i(a) << ",";
-			}
-		}
-		cout << endl;
-	}
+	printCollisionPairTable(numBalls, CollisionPairTable);
 
 	// 実際に使えるように変換
-	ParallelGroup *parallelGroup = new ParallelGroup[pairNo];
-	for (int i = 0; i < pairNo; i++) 
+	ParallelGroup *parallelGroup = new ParallelGroup[numGroup];
+	for (int i = 0; i < numGroup; i++)
 	{
 		// 並行処理できるペアの数
 		int groupNo = 0;
@@ -220,15 +153,13 @@ int main(void)
 	}
 
 	// 確認
-	for (int i = 0; i < pairNo; i++)
+	ok = checkParallelGroup(numBalls, numGroup, parallelGroup);
+	// 表示
+	if (ok)
 	{
-		cout << ato2i(i) << "| ";
-		for (int j = 0; j < parallelGroup[i].numPair; j++)
-		{
-			cout << ato2i(parallelGroup[i].array[j].idx1) << "-" << ato2i(parallelGroup[i].array[j].idx0) << ", ";
-		}
-		cout << endl;
+		cout << "成功！" << endl;
 	}
+	printParallelGroup(numGroup, parallelGroup);
 
 	// メモリ開放
 	for (int y = 0; y < numBalls; y++)
@@ -238,6 +169,7 @@ int main(void)
 	delete [] CollisionPairTable;
 }
 
+//-----------------------------------------------------------------------------
 // 増加するインデックスに対して周期的な矩形波(0と1)を返す変数
 // @param L 0もしくは1が連続する数
 // @param i インデックス
@@ -249,6 +181,7 @@ int Wave(int L, int i)
 	return (i < L)? 0: 1;
 }
 
+//-----------------------------------------------------------------------------
 // 斜めラインの並列処理グループを見るける
 // @param N ボールの数
 // @param CollisionPair[][] コリジョン判定を行う2個のボールのペアを表す、二次元配列のグリッド
@@ -348,3 +281,219 @@ int fingCollisionPairSub(int N, int **CollisionPair, int k, int pairNoBase)
 
 	return maxGroupID + 1;
 }
+
+//-----------------------------------------------------------------------------
+// テスト
+// @param numBalls ボールの数
+// @param CollisionPairTable[][] コリジョン判定を行う2個のボールのペアを表す、二次元配列のグリッド
+bool checkCollisionPairTable(const int numBalls, const int *const *CollisionPairTable)
+{
+	// 1. 全てのボールの組み合わせがコリジョンチェックされているか。
+	// Note:
+	// グリッドの全てに、何回目の並列処理でチェックされるかの値が入っていればOK。
+	// (-1 は実行されないことを表す。)
+	// ついでに並列処理の実行回数も調べる。
+	bool ok = true;
+	int lastParallelNo = 0;
+	for (int y = 0; y < numBalls; y++)
+	{
+		for (int x = y + 1; x < numBalls; x++)
+		{
+			if (CollisionPairTable[y][x] == -1)
+			{
+				cout << "Error:実行されない組み合わせ。Ball#" << y << " - #" << x << endl;
+				ok = false;
+			}
+			if (lastParallelNo < CollisionPairTable[y][x])
+			{
+				lastParallelNo = CollisionPairTable[y][x];
+			}
+		}
+	}
+	// 2. 一回の並列処理グループで、一つのボールが2回以上チェックされていたらエラー
+	// チェック用フラグ変数使う
+	bool *Checked = new bool[numBalls];
+	for (int k = 0; k <= lastParallelNo; k++)
+	{
+		// チェック済みフラグをリセット
+		for (int i = 0; i < numBalls; i++) Checked[i] = false;
+
+		// この並列処理でチェックされる組み合わせを列挙して、
+		for (int y = 0; y < numBalls; y++)
+		{
+			for (int x = y + 1; x < numBalls; x++)
+			{
+				if (CollisionPairTable[y][x] == k)
+				{
+					// この並列処理ですでにチェック済みであればエラー
+					if (Checked[y])
+					{
+						cout << "Error:" << k << "回目の並列処理内で複数回参照。Ball#" << y << endl;
+						ok = false;
+					}
+					if (Checked[x])
+					{
+						cout << "Error:" << k << "回目の並列処理内で複数回参照。Ball#" << x << endl;
+						ok = false;
+					}
+					// チェック済みであることをマーク
+					Checked[y] = Checked[x] = true;
+				}
+			}
+		}
+	}
+	delete[] Checked;
+
+	return ok;
+}
+
+//-----------------------------------------------------------------------------
+// 表示
+// @param numBalls ボールの数
+// @param CollisionPairTable[][] コリジョン判定を行う2個のボールのペアを表す、二次元配列のグリッド
+void printCollisionPairTable(const int numBalls, const int *const *CollisionPairTable)
+{
+	// グリッド表示(縦横ヘッダ付き)
+	cout << "  |";
+	for (int x = 0; x < numBalls; x++)
+	{
+		cout << ato2i(x) << ".";
+	}
+	cout << endl;
+	cout << "--+";
+	for (int x = 0; x < numBalls; x++)
+	{
+		cout << "---";
+	}
+	cout << endl;
+
+	for (int y = 0; y < numBalls; y++)
+	{
+		cout << ato2i(y) << "|";
+
+		for (int x = 0; x < numBalls; x++)
+		{
+			const int a = CollisionPairTable[y][x];
+			if (x < y)
+			{
+				cout << "   ";
+			}
+			else if (y == x)
+			{
+				cout << " - ";
+			}
+			else if (a == -1)
+			{
+				cout << "xx,";
+			}
+			else
+			{
+				cout << ato2i(a) << ",";
+			}
+		}
+		cout << endl;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// 表示
+// @param numGroups グループの数
+// @param groups グループの配列
+void printParallelGroup(const int numGroups, const ParallelGroup *groups)
+{
+	cout << "numGroups = " << numGroups << endl;
+
+	for (int i = 0; i < numGroups; i++)
+	{
+		cout << ato2i(i) << "| ";
+		for (int j = 0; j < groups[i].numPair; j++)
+		{
+			const CollisionPair &pair = groups[i].array[j];
+			cout << ato2i(pair.idx1) << "-" << ato2i(pair.idx0) << ", ";
+		}
+		cout << endl;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// テスト
+// @param numBalls ボールの数
+// @param numGroups グループの数
+// @param groups グループの配列
+bool checkParallelGroup(const int numBalls, const int numGroups, const ParallelGroup *groups)
+{
+	// 1. 各並列処理グループ内で、一つのボールが複数回参照されていないか
+	bool ok = true;
+	bool *Checked = new bool [numBalls];
+	for (int i = 0; i < numGroups; i++)
+	{
+		// チェック済みフラグをリセット
+		for (int j = 0; j < numBalls; j++) Checked[j] = false;
+
+		// この並列処理でチェックされる組み合わせを列挙して、
+		const CollisionPair *pair = groups[i].array;
+		for (int j = 0; j < groups[i].numPair; j++)
+		{
+			// この並列処理ですでにチェック済みであればエラー
+			if (Checked[pair->idx0])
+			{
+				cout << "Error:" << i << "回目の並列処理内で複数回参照。Ball#" << pair->idx0 << endl;
+				ok = false;
+			}
+			if (Checked[pair->idx1])
+			{
+				cout << "Error:" << i << "回目の並列処理内で複数回参照。Ball#" << pair->idx1 << endl;
+				ok = false;
+			}
+			// チェック済みであることをマーク
+			Checked[pair->idx0] = Checked[pair->idx1] = true;
+			// 次
+			pair++;
+		}
+	}
+	delete[] Checked;
+
+	// 2. 複数の並列処理グループで重複したチェックがないか
+	int *checkGrid = new int [numBalls * numBalls];
+	for (int i = 0; i < numBalls * numBalls; i++) checkGrid[i] = -1;
+	for (int i = 0; i < numGroups; i++)
+	{
+		const CollisionPair *pair = groups[i].array;
+		for (int j = 0; j < groups[i].numPair; j++)
+		{
+			// 組み合わせがすでに別の並列処理グループでチェックされていないか
+			int idx0 = min(pair->idx0, pair->idx1);
+			int idx1 = max(pair->idx0, pair->idx1);
+			int idx = (numBalls * idx0) + idx1;
+			if (0 <= checkGrid[idx])
+			{
+				cout << "Error:並列処理グループ#" << checkGrid[idx] << "と#" << i << "で重複チェック。"
+					 << "Ball#" << idx0 << " - #" << idx1 << endl;
+				ok = false;
+			}
+			// 組み合わせに並列処理グループ番号を設定
+			checkGrid[idx] = i;
+			// 次
+			pair++;
+		}
+	}
+
+	// 3. 全てのボールの組み合わせがコリジョンチェックされているか。
+	for (int y = 0; y < numBalls; y++)
+	{
+		for (int x = y + 1; x < numBalls; x++)
+		{
+			int idx = (numBalls * y) + x;
+			if (checkGrid[idx] < 0)
+			{
+				cout << "Error:実行されない組み合わせ。Ball#" << y << " - #" << x << endl;
+				ok = false;
+			}
+		}
+	}
+
+	delete[] checkGrid;
+
+	return ok;
+}
+
