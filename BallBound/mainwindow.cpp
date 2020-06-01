@@ -1,5 +1,6 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "parallelGroup.h"
 #include <ctime>
 
 int fps = 60;
@@ -53,6 +54,8 @@ void MainWindow::resetState(void)
 		Qt::GlobalColor color = ColorTable[i % _countof(ColorTable)];
 		m_balls[i].setBall(10, color, 1);
 	}
+
+	m_parallelGroup = parallelGenerator(_countof(m_balls), &m_numParallelGroup);
 	//m_balls[0].setBall(40, ColorTable[0], 4);
 }
 
@@ -193,25 +196,27 @@ void MainWindow::timerEvent(QTimerEvent *)
 		for (int a = 0; a < stepCount; a++)
 		{
 			// 移動計算(コリジョンは無視)
-			//#pragma omp parallel for
+			#pragma omp parallel for
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
 				m_balls[i].UpdateMove(div_dt);
 			}
 			// ボール同士のコリジョン
-			for (int i = 0; i < _countof(m_balls); i++)
+			for (int i = 0; i < m_numParallelGroup; i++)
 			{
 				#pragma omp parallel for
-				for(int j = i + 1; j < _countof(m_balls); j++)
+				for (int j = 0; j < m_parallelGroup[i].numPair; j++)
 				{
-					m_balls[i].UpdateCollideBoll(div_dt, m_balls[j]);	
+					int x = m_parallelGroup[i].array[j].idx0;
+					int y = m_parallelGroup[i].array[j].idx1;
+					m_balls[x].UpdateCollideBall(div_dt, m_balls[y]);
 				}
 			}
 			// ボールと床のコリジョン
 			// 地形コリジョンのオフセットがある場合には、その移動も細分化する
 			Vector2f co = m_floorOffset0 + (a + 1) * (floorOffset - m_floorOffset0) / stepCount;
 			// 並行実行(マルチスレッド)
-			//#pragma omp parallel for
+			#pragma omp parallel for
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
 				m_balls[i].UpdateCollideWall(div_dt, (FLOAT_T)m_maxPos / 1000.0f, g_ParabolaFactor, co, floorVel);

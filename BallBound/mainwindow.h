@@ -6,6 +6,7 @@
 #include "QtWidgets"
 #include "cball.h"
 #include "variable.h"
+#include "parallelGroup.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -32,8 +33,10 @@ protected:
 	int m_gridSize = m_gridNumber * m_gridSpan;
 	int m_maxPos = m_gridSize / 2;
 	int m_frameCounter = 0;
+	int m_numParallelGroup;
+	ParallelGroup *m_parallelGroup;
 
-	CBall m_balls[1];
+	CBall m_balls[1024];
 
 	// 起動時のウィンドウの位置(ウィンドウドラッグによるコリジョン遊びで参照)
 	QPoint m_initWindowPos{ 0, 0 };

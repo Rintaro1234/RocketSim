@@ -19,7 +19,7 @@ public:
 	void UpdateCollideWall(
 		FLOAT_T dt, FLOAT_T maxPos, FLOAT_T ParabolaFactor,
 		Vector2f &floorOffset, Vector2f &floorVel);
-	void UpdateCollideBoll(FLOAT_T dt, CBall &other);
+	void UpdateCollideBall(FLOAT_T dt, CBall &other);
 	// 最初の位置
 	void setInitialValue(Vector2f initialPos, Vector2f speed);
 	// 色と半径

@@ -32,7 +32,7 @@ void CBall::UpdateMove(FLOAT_T dt)
 	m_Rect.Expand(m_Pos, m_radius);*/
 }
 
-void CBall::UpdateCollideBoll(FLOAT_T /*dt*/, CBall &other)
+void CBall::UpdateCollideBall(FLOAT_T /*dt*/, CBall &other)
 {
 	// 衝突がなければ何もしない
 	FLOAT_T dis = m_Pos.GetDistance(other.m_Pos);
