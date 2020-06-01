@@ -27,15 +27,16 @@ public:
 	// 落下と移動
 	void move(FLOAT_T dt);
 
+	// ボール間の隙間を求める
+	float GetInterspace(const CBall &ball) const;
+
 	Vector2f m_Pos	  { 0, 0 };
+	FLOAT_T	 m_Radius = 20;
+	FLOAT_T	 m_Mass = 10; // kg
 	Vector2f m_Vel	  { 0, 0 };
 	Vector2f m_baseVel{ 0, 0 };
 	Vector2f m_basePos{ 0, 0 };
-	Rect	 m_Rect	  { 0, 0 };
 
-	FLOAT_T m_Mass = 10; // kg
-	FLOAT_T m_Radius = 20;
-	FLOAT_T m_frameCounter = 0;
 	static FLOAT_T sm_ReflectionCoef;
 	static Vector2f sm_Ft;
 	Qt::GlobalColor col;

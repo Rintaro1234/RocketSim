@@ -1,5 +1,5 @@
 ﻿#pragma once
-#define FLOAT_T double
+#define FLOAT_T float
 
 class Vector2
 {

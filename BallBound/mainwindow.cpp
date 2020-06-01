@@ -124,10 +124,12 @@ void MainWindow::paintEvent(QPaintEvent *)
 		painter.drawLine((m_maxPos + offsetX), offsetY, (m_maxPos + offsetX), 2 * m_maxPos + offsetY);
 	}
 	// ボール
+#if 1
 	for (int i = 0; i < _countof(m_balls); i++)
 	{
 		m_balls[i].draw(painter);
 	}
+#endif
 
 	// FPS
 	painter.setViewport(0, 0, width(), height());

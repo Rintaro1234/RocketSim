@@ -36,7 +36,7 @@ protected:
 	int m_numParallelGroup;
 	ParallelGroup *m_parallelGroup;
 
-	CBall m_balls[1024];
+	CBall m_balls[512];
 
 	// 起動時のウィンドウの位置(ウィンドウドラッグによるコリジョン遊びで参照)
 	QPoint m_initWindowPos{ 0, 0 };

@@ -32,15 +32,42 @@ void CBall::UpdateMove(FLOAT_T dt)
 	m_Rect.Expand(m_Pos, m_radius);*/
 }
 
+// ボール間の隙間を求める
+float CBall::GetInterspace(const CBall &ball) const
+{
+	__m128 a = _mm_loadu_ps(&m_Pos.x);			// a = { b0.x, b0.y, b0.r, - }
+	__m128 b = _mm_loadu_ps(&ball.m_Pos.x);		// b = { b1.x, b1.y, b1.r, - }
+	__m128 c = _mm_sub_ps(a, b);				// c = { b0.x-b1.x, b0.y-b1.y, -, - }
+	__m128 d = _mm_mul_ps(c, c);				// d = { (b0.x-b1.x)^2, (b0.y-b1.y)^2, -, - }
+	__m128 e = _mm_shuffle_ps(d, d, _MM_SHUFFLE(0, 1, 0, 1));	// d = { (b0.y-b1.y)^2, (b0.x-b1.x)^2, -, - }
+	__m128 f = _mm_add_ps(d, e);				// f = { (b0.x-b1.x)^2 + (b0.y-b1.y)^2, ... }
+//	__m128 g = _mm_sqrt_ss(f);					// g = { SQRT((b0.x-b1.x)^2 + (b0.y-b1.y)^2), ... }
+	__m128 h = _mm_add_ps(a, b);				// h = { -, -, b0.r+b1.r. - }
+	__m128 i = _mm_shuffle_ps(h, h, _MM_SHUFFLE(2, 2, 2, 2));	// i = { b0.r+b1.r, -, -, - }
+	__m128 j = _mm_mul_ss(i, i);				// j = { (b0.r+b1.r)^2, -, -, - }
+	__m128 k = _mm_sub_ss(f, j);				// j = { ((b0.x-b1.x)^2 + (b0.y-b1.y)^2) - (b0.r+b1.r)^2, -, -, - }
+
+	float dis;
+	_mm_store_ss(&dis, k);
+	return dis;
+}
+
 void CBall::UpdateCollideBall(FLOAT_T /*dt*/, CBall &other)
 {
 	// 衝突がなければ何もしない
+#if 0
 	FLOAT_T dis = m_Pos.GetDistance(other.m_Pos);
 	if ((m_Radius + other.m_Radius) < dis)
 	{
 		return;
 	}
-	
+#else
+	if (0.0f < GetInterspace(other))
+	{
+		return;
+	}
+#endif
+
 	// 万が一、離れる方向なのに衝突が判定されていたら、衝突がなかったことにする
 	{
 		Vector2f V = other.m_Vel - m_Vel;
