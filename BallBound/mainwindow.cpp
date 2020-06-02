@@ -1,6 +1,8 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "parallelGroup.h"
+#include "profileapi.h"
+#include <inttypes.h>
 #include <ctime>
 
 int fps = 60;
@@ -10,6 +12,10 @@ FLOAT_T g_ParabolaFactor = 2.0f;
 bool g_Pause = false;
 // ポーズ中のステップ実行
 bool g_StepRun = false;
+// 処理にかかった時間(0~1s)
+int64_t sumTime = 0;
+// QueryPerformanceの一秒はどれくらいか。
+LARGE_INTEGER lpFrequency;
 
 FLOAT_T random(FLOAT_T x0, FLOAT_T x1)
 {
@@ -56,6 +62,7 @@ void MainWindow::resetState(void)
 	}
 
 	m_parallelGroup = parallelGenerator(_countof(m_balls), &m_numParallelGroup);
+	QueryPerformanceFrequency(&lpFrequency);
 	//m_balls[0].setBall(40, ColorTable[0], 4);
 }
 
@@ -197,23 +204,28 @@ void MainWindow::timerEvent(QTimerEvent *)
 
 		for (int a = 0; a < stepCount; a++)
 		{
+			LARGE_INTEGER start, end;
+			QueryPerformanceCounter(&start);
+
 			// 移動計算(コリジョンは無視)
 			#pragma omp parallel for
 			for (int i = 0; i < _countof(m_balls); i++)
 			{
 				m_balls[i].UpdateMove(div_dt);
 			}
+
 			// ボール同士のコリジョン
 			for (int i = 0; i < m_numParallelGroup; i++)
 			{
+				const ParallelGroup &group = m_parallelGroup[i];
 				#pragma omp parallel for
-				for (int j = 0; j < m_parallelGroup[i].numPair; j++)
+				for (int j = 0; j < group.numPair; j++)
 				{
-					int x = m_parallelGroup[i].array[j].idx0;
-					int y = m_parallelGroup[i].array[j].idx1;
-					m_balls[x].UpdateCollideBall(div_dt, m_balls[y]);
+					const CollisionPair &pair = group.array[j];
+					m_balls[pair.idx0].UpdateCollideBall(div_dt, m_balls[pair.idx1]);
 				}
 			}
+
 			// ボールと床のコリジョン
 			// 地形コリジョンのオフセットがある場合には、その移動も細分化する
 			Vector2f co = m_floorOffset0 + (a + 1) * (floorOffset - m_floorOffset0) / stepCount;
@@ -223,6 +235,10 @@ void MainWindow::timerEvent(QTimerEvent *)
 			{
 				m_balls[i].UpdateCollideWall(div_dt, (FLOAT_T)m_maxPos / 1000.0f, g_ParabolaFactor, co, floorVel);
 			}
+
+			QueryPerformanceCounter(&end);
+			sumTime += end.QuadPart - start.QuadPart;
+			m_lpFrameCounter++;
 		}
 	}
 	g_StepRun = false;
@@ -237,6 +253,17 @@ void MainWindow::timerEvent(QTimerEvent *)
 		m_fpsFrameCounter = 0;
 	}
 	m_fpsFrameCounter++;
+
+	// 処理時間計測
+	if (fps * 16 < m_lpFrameCounter)
+	{
+		double b = (double)(sumTime * 1000) / (double)m_lpFrameCounter / (double)lpFrequency.QuadPart;
+		char buffer[128];
+		sprintf_s(buffer, "ProcessingTime = %.3f (ms)\n", b);
+		OutputDebugStringA(buffer);
+		sumTime = 0;
+		m_lpFrameCounter = 0;
+	}
 
 	// デバッグ表示
 	m_frameCounter++;

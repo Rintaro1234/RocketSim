@@ -57,6 +57,9 @@ protected:
 	// FPS計測用、表示FPS値
 	float m_fps = 0.0f;
 
+	// 計測時間用のフレームカウンター
+	int m_lpFrameCounter = 0;
+
 private:
     Ui::MainWindow *ui;
 };
