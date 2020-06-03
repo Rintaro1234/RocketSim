@@ -5,24 +5,30 @@
 
 FLOAT_T g = -9.8f;
 FLOAT_T boxSize = 0;
+
+CBallPos *CBall::sm_posDataBuf = nullptr;
 FLOAT_T CBall::sm_ReflectionCoef = 0.92f;
 Vector2f CBall::sm_Ft;
 
 //-----------------------------------------------------------------------------
 void CBall::move(FLOAT_T dt)
 {
+	CBallPos &posData = sm_posDataBuf[m_index];
+
 	// 前回の結果を記録
 	Vector2f vel0 = m_Vel;
 	// 計算
 	m_Vel.y = vel0.y + (g * dt);
-	m_Pos = m_Pos + (vel0 + m_Vel) * dt / 2.0f;
+	posData.m_Pos = posData.m_Pos + (vel0 + m_Vel) * dt / 2.0f;
 }
 
 void CBall::UpdateMove(FLOAT_T dt)
 {
+	CBallPos &posData = sm_posDataBuf[m_index];
+
 	// シミュレーションをリセットするために、初期状態を保存する
 	m_baseVel = m_Vel;
-	m_basePos = m_Pos;
+	m_basePos = posData.m_Pos;
 
 	move(dt);
 
@@ -33,7 +39,7 @@ void CBall::UpdateMove(FLOAT_T dt)
 }
 
 // ボール間の隙間を求める
-float CBall::GetInterspace(const CBall &ball) const
+float CBallPos::GetInterspace(const CBallPos &ball) const
 {
 	__m128 a = _mm_loadu_ps(&m_Pos.x);			// a = { b0.x, b0.y, b0.r, - }
 	__m128 b = _mm_loadu_ps(&ball.m_Pos.x);		// b = { b1.x, b1.y, b1.r, - }
@@ -54,6 +60,8 @@ float CBall::GetInterspace(const CBall &ball) const
 
 void CBall::UpdateCollideBall(FLOAT_T /*dt*/, CBall &other)
 {
+	// 本関数の外で衝突判定を行い、衝突のあるペアのみ処理する。
+#if 0
 	// 衝突がなければ何もしない
 #if 0
 	FLOAT_T dis = m_Pos.GetDistance(other.m_Pos);
@@ -62,23 +70,27 @@ void CBall::UpdateCollideBall(FLOAT_T /*dt*/, CBall &other)
 		return;
 	}
 #else
-	if (0.0f < GetInterspace(other))
+	if (0.0f < m_posData->GetInterspace(*other.m_posData))
 	{
 		return;
 	}
 #endif
+#endif
+
+	CBallPos &posData = sm_posDataBuf[m_index];
+	CBallPos &otherPosData = sm_posDataBuf[other.m_index];
 
 	// 万が一、離れる方向なのに衝突が判定されていたら、衝突がなかったことにする
 	{
 		Vector2f V = other.m_Vel - m_Vel;
-		Vector2f D = other.m_Pos - m_Pos;
+		Vector2f D = otherPosData.m_Pos - posData.m_Pos;
 		if (0.0f <= V.dot(D)) return;
 	}
 
 	#ifdef _DEBUG
 	{
-		FLOAT_T V0 = m_Mass * m_Vel.GetLength();
-		FLOAT_T V1 = other.m_Mass * other.m_Vel.GetLength();
+		FLOAT_T V0 = posData.m_Mass * m_Vel.GetLength();
+		FLOAT_T V1 = otherPosData.m_Mass * other.m_Vel.GetLength();
 		char buffer[256];
 		sprintf_s(buffer, "Before: V0 = %.3f V1 = %.3f V0 + V1 = %.3f\n", V0, V1, V0 + V1);
 		OutputDebugStringA(buffer);
@@ -88,26 +100,26 @@ void CBall::UpdateCollideBall(FLOAT_T /*dt*/, CBall &other)
 	// 重心を原点とした座標系で、反射計算を行う。
 	// そうすると、お互いの速度ベクトルが、反対向きの並行になるので、シンプルに計算できる。
 	// 重心からの相対速度
-	Vector2f Vc = ((m_Mass * m_Vel) + (other.m_Mass * other.m_Vel)) / (m_Mass + other.m_Mass);
+	Vector2f Vc = ((posData.m_Mass * m_Vel) + (otherPosData.m_Mass * other.m_Vel)) / (posData.m_Mass + otherPosData.m_Mass);
 	Vector2f Va = m_Vel - Vc;
 	Vector2f Vb = other.m_Vel - Vc;
 
 	// 反射計算
-	Vector2f N = (other.m_Pos - m_Pos).normalize();
+	Vector2f N = (otherPosData.m_Pos - posData.m_Pos).normalize();
 	Va = N.reflect(Va) * sm_ReflectionCoef;
 	Vb = N.reflect(Vb) * sm_ReflectionCoef;
 	// 重心座標系から、通常の座標系に戻す
 	m_Vel = (Va + Vc);
 	other.m_Vel = (Vb + Vc);
 	// 位置を、衝突した瞬間に移動(近似)
-	Vector2f ct = m_Pos + (other.m_Pos - m_Pos) * m_Radius / (m_Radius + other.m_Radius);
-	m_Pos = ct - N * m_Radius;
-	other.m_Pos = ct + N * other.m_Radius;
+	Vector2f ct = posData.m_Pos + (otherPosData.m_Pos - posData.m_Pos) * posData.m_Radius / (posData.m_Radius + otherPosData.m_Radius);
+	posData.m_Pos		= ct - N * posData.m_Radius;
+	otherPosData.m_Pos  = ct + N * otherPosData.m_Radius;
 
 	#ifdef _DEBUG
 	{
-		FLOAT_T V0 = m_Mass * m_Vel.GetLength();
-		FLOAT_T V1 = other.m_Mass * other.m_Vel.GetLength();
+		FLOAT_T V0 = posData.m_Mass * m_Vel.GetLength();
+		FLOAT_T V1 = otherPosData.m_Mass * other.m_Vel.GetLength();
 		char buffer[256];
 		sprintf_s(buffer, "After: V0 = %.3f V1 = %.3f V0 + V1 = %.3f\n", V0, V1, V0 + V1);
 		OutputDebugStringA(buffer);
@@ -119,21 +131,23 @@ void CBall::UpdateCollideWall(
 	FLOAT_T dt, FLOAT_T maxPos, FLOAT_T ParabolaFactor,
 	Vector2f &floorOffset, Vector2f &floorVel)
 {
+	CBallPos &posData = sm_posDataBuf[m_index];
+
 	// 接地判定
 	if (ParabolaFactor == 0)
 	{
 		// 地形が平面の場合
-		if ((m_Pos.y - m_Radius) <= floorOffset.y)
+		if ((posData.m_Pos.y - posData.m_Radius) <= floorOffset.y)
 		{
 			// オフセットされた床に対して位置を修正
-			m_Pos.y = floorOffset.y + m_Radius;
+			posData.m_Pos.y = floorOffset.y + posData.m_Radius;
 			// 質量無限大の床とボールの反射計算
 			m_Vel.y = ((-m_Vel.y + floorVel.y) * sm_ReflectionCoef) + floorVel.y;
 
 			// 衝突エネルギーの計算
 			{
 				Vector2f V = m_Vel - m_baseVel;
-				sm_Ft = sm_Ft + m_Mass * V; // エネルギー量[N]を入れる
+				sm_Ft = sm_Ft + posData.m_Mass * V; // エネルギー量[N]を入れる
 			}
 		}
 	}
@@ -146,7 +160,7 @@ void CBall::UpdateCollideWall(
 		// 三次方程式を解く。虚数を持たない解が一つ得られる。
 		// A*x^3+B*x+C
 		// Note: 地面のオフセットに対応するため、ボール座標を放物線座標系に変換する
-		Vector2f bp = m_Pos - floorOffset;
+		Vector2f bp = posData.m_Pos - floorOffset;
 		const FLOAT_T pf = ParabolaFactor;
 		double c3 = -2.0f * pf * pf;
 		double c2 = 0.0f;
@@ -181,7 +195,7 @@ void CBall::UpdateCollideWall(
 
 		// ボールと、最も近い二次曲線上の点との距離が、ボールの半径より小さければ、コリジョンあり
 		FLOAT_T floorDistance = bp.GetDistance(p);
-		if (floorDistance <= m_Radius)
+		if (floorDistance <= posData.m_Radius)
 		{
 			// 接線T
 			// Note: 放物線を示す二次式(y = pf * x^2)の微分(y = 2 * pf * x)
@@ -200,37 +214,39 @@ void CBall::UpdateCollideWall(
 			// 地面座標系での反射を、シミュレーション座標系に戻す
 			m_Vel = m_Vel + floorVel;
 			// ボールの位置を衝突の瞬間へ戻す
-			m_Pos = p + (m_Radius * N);
+			posData.m_Pos = p + (posData.m_Radius * N);
 			// ボールの座標を放物線座標系から、シミュレーション座標系へ戻す
-			m_Pos = m_Pos + floorOffset;
+			posData.m_Pos = posData.m_Pos + floorOffset;
 
 			// 衝突エネルギーの計算
 			{
 				Vector2f V = m_Vel - m_baseVel;
-				sm_Ft = sm_Ft + m_Mass * V; // エネルギー量[N]を入れる
+				sm_Ft = sm_Ft + posData.m_Mass * V; // エネルギー量[N]を入れる
 			}
 		}
 	}
 
 	// 壁との衝突判定
-	if ((maxPos + floorOffset.x) <= (m_Pos.x + m_Radius))
+	if ((maxPos + floorOffset.x) <= (posData.m_Pos.x + posData.m_Radius))
 	{
 		m_Vel.x = ((-m_Vel.x + floorVel.x) * sm_ReflectionCoef) + floorVel.x;
-		m_Pos.x = (maxPos + floorOffset.x) - m_Radius;
+		posData.m_Pos.x = (maxPos + floorOffset.x) - posData.m_Radius;
 	}
 
-	if ((m_Pos.x - m_Radius) <= -(maxPos - floorOffset.x))
+	if ((posData.m_Pos.x - posData.m_Radius) <= -(maxPos - floorOffset.x))
 	{
 		m_Vel.x = ((-m_Vel.x + floorVel.x) * sm_ReflectionCoef) + floorVel.x;
-		m_Pos.x = -(maxPos - floorOffset.x) + m_Radius;
+		posData.m_Pos.x = -(maxPos - floorOffset.x) + posData.m_Radius;
 	}
 }
 
 void CBall::draw(QPainter &painter)
 {
+	CBallPos &posData = sm_posDataBuf[m_index];
+
 	// 単位変換
-	int r = m_Radius * 1000;
-	Vector2 position{ (int)(m_Pos.x * 1000), (int)(m_Pos.y * 1000) };
+	int r = posData.m_Radius * 1000;
+	Vector2 position{ (int)(posData.m_Pos.x * 1000), (int)(posData.m_Pos.y * 1000) };
 	// 描画
 	painter.setPen(QPen(col, 2, Qt::SolidLine, Qt::FlatCap));
 	painter.drawEllipse((position.x - r), (position.y - r), r * 2, r * 2);
@@ -239,14 +255,18 @@ void CBall::draw(QPainter &painter)
 
 void CBall::setInitialValue(Vector2f initialPos, Vector2f speed)
 {
+	CBallPos &posData = sm_posDataBuf[m_index];
+
 	// 代入
-	m_Pos = initialPos;
+	posData.m_Pos = initialPos;
 	m_Vel = speed;
 }
 
 void CBall::setBall(int r, Qt::GlobalColor color, FLOAT_T mass)
 {
-	m_Radius = (FLOAT_T)r / 1000;
+	CBallPos &posData = sm_posDataBuf[m_index];
+
+	posData.m_Radius = (FLOAT_T)r / 1000;
 	col = color;
-	m_Mass = mass;
+	posData.m_Mass = mass;
 }

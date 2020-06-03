@@ -44,6 +44,15 @@ MainWindow::~MainWindow()
 // シミュレーションをリセットする
 void MainWindow::resetState(void)
 {
+	// ボールのインスタンスを配列として作成
+	m_ballsPos = new CBallPos[m_numBalls];
+	CBall::sm_posDataBuf = m_ballsPos;
+	m_balls = new CBall[m_numBalls];
+	for (int i = 0; i < m_numBalls; i++)
+	{
+		m_balls[i].m_index = i;
+	}
+
 	// ボールの初期位置と初速度を乱数で決める
 	// (ついでに色も)
 	FLOAT_T left = (FLOAT_T)-m_maxPos / 1000.0f;
@@ -52,7 +61,7 @@ void MainWindow::resetState(void)
 	FLOAT_T bottom = 0.4f;
 	FLOAT_T speedRange = 0.5f;
 	Qt::GlobalColor ColorTable[] = { Qt::red, Qt::blue, Qt::green, Qt::cyan, Qt::yellow };
-	for (int i = 0; i < _countof(m_balls); i++)
+	for (int i = 0; i < m_numBalls; i++)
 	{
 		Vector2f Pos{ random(left, right), random(top, bottom) };
 		Vector2f speed{ random(-speedRange, speedRange), 0 };
@@ -61,7 +70,7 @@ void MainWindow::resetState(void)
 		m_balls[i].setBall(10, color, 1);
 	}
 
-	m_parallelGroup = parallelGenerator(_countof(m_balls), &m_numParallelGroup);
+	m_parallelGroup = parallelGenerator(m_numBalls, &m_numParallelGroup);
 	QueryPerformanceFrequency(&lpFrequency);
 	//m_balls[0].setBall(40, ColorTable[0], 4);
 }
@@ -132,7 +141,7 @@ void MainWindow::paintEvent(QPaintEvent *)
 	}
 	// ボール
 #if 1
-	for (int i = 0; i < _countof(m_balls); i++)
+	for (int i = 0; i < m_numBalls; i++)
 	{
 		m_balls[i].draw(painter);
 	}
@@ -209,20 +218,20 @@ void MainWindow::timerEvent(QTimerEvent *)
 
 			// 移動計算(コリジョンは無視)
 			#pragma omp parallel for
-			for (int i = 0; i < _countof(m_balls); i++)
+			for (int i = 0; i < m_numBalls; i++)
 			{
 				m_balls[i].UpdateMove(div_dt);
 			}
 
 			// ボール同士のコリジョン
-			for (int i = 0; i < m_numParallelGroup; i++)
+			for (int i = 0; i < m_numBalls; i++)
 			{
-				const ParallelGroup &group = m_parallelGroup[i];
-				#pragma omp parallel for
-				for (int j = 0; j < group.numPair; j++)
+				for (int j = i+1; j < m_numBalls; j++)
 				{
-					const CollisionPair &pair = group.array[j];
-					m_balls[pair.idx0].UpdateCollideBall(div_dt, m_balls[pair.idx1]);
+					if (m_ballsPos[i].GetInterspace(m_ballsPos[j]) < 0.0f)
+					{
+						m_balls[i].UpdateCollideBall(div_dt, m_balls[j]);
+					}
 				}
 			}
 
@@ -231,7 +240,7 @@ void MainWindow::timerEvent(QTimerEvent *)
 			Vector2f co = m_floorOffset0 + (a + 1) * (floorOffset - m_floorOffset0) / stepCount;
 			// 並行実行(マルチスレッド)
 			#pragma omp parallel for
-			for (int i = 0; i < _countof(m_balls); i++)
+			for (int i = 0; i < m_numBalls; i++)
 			{
 				m_balls[i].UpdateCollideWall(div_dt, (FLOAT_T)m_maxPos / 1000.0f, g_ParabolaFactor, co, floorVel);
 			}
