@@ -2,6 +2,7 @@
 #include "cball.h"
 #include "CubicEquation.h"
 #include <windows.h>
+using namespace std;
 
 FLOAT_T g = -9.8f;
 FLOAT_T boxSize = 0;
@@ -22,7 +23,7 @@ void CBall::move(FLOAT_T dt)
 	posData.m_Pos = posData.m_Pos + (vel0 + m_Vel) * dt / 2.0f;
 }
 
-void CBall::UpdateMove(FLOAT_T dt)
+void CBall::UpdateMove(spaceGrid *grid, FLOAT_T dt)
 {
 	CBallPos &posData = sm_posDataBuf[m_index];
 
@@ -30,12 +31,25 @@ void CBall::UpdateMove(FLOAT_T dt)
 	m_baseVel = m_Vel;
 	m_basePos = posData.m_Pos;
 
+	// 移動計算
 	move(dt);
 
-	/*// 移動したときの範囲をボックス上にする
-	m_Rect.Empty();
-	m_Rect.Expand(m_basePos, m_radius);
-	m_Rect.Expand(m_Pos, m_radius);*/
+	// 各Cellにわける
+	FLOAT_T xx = posData.m_Pos.x - grid->minX;
+	FLOAT_T lightSide = xx - posData.m_Radius;
+	FLOAT_T rightSide = xx + posData.m_Radius;
+	//	grid->mulIdxInvWidth = grid->numCells / (grid->maxX - grid->minX);
+	int Ridx = floor(rightSide * grid->mulIdxInvWidth);
+	int Lidx = floor(lightSide * grid->mulIdxInvWidth);
+	if (Lidx < 0) Lidx = 0;
+	const int N = grid->numCells - 1;
+	if (N < Ridx) Ridx = N;
+	for (int i = Lidx; i <= Ridx; i++)
+	{
+		lineComponent &X = grid->components[i];
+		X.Components[X.numComponent] = m_index;
+		X.numComponent++;
+	}
 }
 
 // ボール間の隙間を求める

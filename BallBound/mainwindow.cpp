@@ -12,6 +12,8 @@ FLOAT_T g_ParabolaFactor = 2.0f;
 bool g_Pause = false;
 // ポーズ中のステップ実行
 bool g_StepRun = false;
+// 画面を立て分割する数
+const int g_numCells = 16;
 // 処理にかかった時間(0~1s)
 int64_t sumTime = 0;
 // QueryPerformanceの一秒はどれくらいか。
@@ -52,6 +54,19 @@ void MainWindow::resetState(void)
 	{
 		m_balls[i].m_index = i;
 	}
+
+	// 分割した空間に何のボールが入っているか確かめるための2次配列を作成
+	m_spaceGridA.components = new lineComponent[g_numCells];
+	for (int i = 0; i < g_numCells; i++)
+	{
+		m_spaceGridA.components[i].Components = new uint16_t[m_numBalls];
+	}
+	m_spaceGridA.maxX = (FLOAT_T)m_maxPos / 1000.0f;
+	m_spaceGridA.minX = -(FLOAT_T)m_maxPos / 1000.0f;
+	m_spaceGridA.numCells = g_numCells;
+
+	// リセット
+	m_spaceGridA.reset();
 
 	// ボールの初期位置と初速度を乱数で決める
 	// (ついでに色も)
@@ -190,6 +205,10 @@ void MainWindow::timerEvent(QTimerEvent *)
 		floorOffset.x = (FLOAT_T)(m_gridSize * windowMove.x()) / (FLOAT_T)(m_viewportSize * 1000);
 		floorOffset.y = (FLOAT_T)(-m_gridSize * windowMove.y()) / (FLOAT_T)(m_viewportSize * 1000);
 	}
+	// 地形のオフセット量を分割空間の座標に入れる
+	m_spaceGridA.maxX = (FLOAT_T)m_maxPos / 1000.0f + floorOffset.x;
+	m_spaceGridA.minX = -(FLOAT_T)m_maxPos / 1000.0f + floorOffset.x;
+	m_spaceGridA.update();
 	// 地形コリジョンの移動速度を計算([m/s])
 	Vector2f floorVel = (floorOffset - m_floorOffset0) * (FLOAT_T)(fps);
 
@@ -213,17 +232,40 @@ void MainWindow::timerEvent(QTimerEvent *)
 
 		for (int a = 0; a < stepCount; a++)
 		{
+			// 空間わけのリセット
+			m_spaceGridA.reset();
+
 			LARGE_INTEGER start, end;
 			QueryPerformanceCounter(&start);
+			
+			// 空間わけのリセット
 
 			// 移動計算(コリジョンは無視)
 			#pragma omp parallel for
 			for (int i = 0; i < m_numBalls; i++)
 			{
-				m_balls[i].UpdateMove(div_dt);
+				m_balls[i].UpdateMove(&m_spaceGridA, div_dt);
 			}
 
 			// ボール同士のコリジョン
+			for (int i = 0; i < m_spaceGridA.numCells; i++)
+			{
+				const lineComponent &com = m_spaceGridA.components[i];
+				for (int y = 0; y < com.numComponent; y++)
+				{
+					const int idx0 = com.Components[y];
+					CBallPos &ballPos0 = m_ballsPos[idx0];
+					for (int x = y + 1; x < com.numComponent; x++)
+					{
+						const int idx1 = com.Components[x];
+						if (ballPos0.GetInterspace(m_ballsPos[idx1]) < 0.0f)
+						{
+							m_balls[idx0].UpdateCollideBall(div_dt, m_balls[idx1]);
+						}
+					}
+				}
+			}
+			/*
 			for (int i = 0; i < m_numBalls; i++)
 			{
 				for (int j = i+1; j < m_numBalls; j++)
@@ -233,7 +275,7 @@ void MainWindow::timerEvent(QTimerEvent *)
 						m_balls[i].UpdateCollideBall(div_dt, m_balls[j]);
 					}
 				}
-			}
+			}*/
 
 			// ボールと床のコリジョン
 			// 地形コリジョンのオフセットがある場合には、その移動も細分化する

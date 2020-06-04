@@ -73,12 +73,12 @@ void printCollisionPairTable(const int numBalls, const int *const *CollisionPair
 // @param numBalls ボールの数
 // @param numGroups グループの数
 // @param groups グループの配列
-bool checkParallelGroup(const int numBalls, const int numGroups, const ParallelGroup *groups);
+bool checkParallelGroup(const int numBalls, const int numGroups, const m_ParallelGroup *groups);
 
 // 表示
 // @param numGroups グループの数
 // @param groups グループの配列
-void printParallelGroup(const int numGroups, const ParallelGroup *groups);
+void printParallelGroup(const int numGroups, const m_ParallelGroup *groups);
 
 //-----------------------------------------------------------------------------
 int main(void)

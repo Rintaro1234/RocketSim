@@ -9,6 +9,36 @@ namespace Qt
 
 class QPainter;
 
+struct lineComponent
+{
+	int32_t numComponent = 0;
+	uint16_t * Components;
+};
+
+struct spaceGrid
+{
+	lineComponent * components;
+	int numCells;
+	float maxX;
+	float minX;
+	float mulIdxInvWidth;
+
+	// 内部パラメータの更新
+	void update(void)
+	{
+		mulIdxInvWidth = (FLOAT_T)numCells / (maxX - minX);
+	}
+
+	// リセット
+	void reset(void)
+	{
+		for (int i = 0; i < numCells; i++)
+		{
+			components[i].numComponent = 0;
+		}
+	}
+};
+
 // CBall の位置に関するデータ
 // 当たり判定を高速化するため、それに必要なデータだけを別に切り出す。
 struct alignas(16) CBallPos
@@ -27,7 +57,7 @@ public:
 	// 描画
 	void draw(QPainter &painter);
 	// 更新
-	void UpdateMove(FLOAT_T dt);
+	void UpdateMove(spaceGrid *grid, FLOAT_T dt);
 	void UpdateCollideWall(
 		FLOAT_T dt, FLOAT_T maxPos, FLOAT_T ParabolaFactor,
 		Vector2f &floorOffset, Vector2f &floorVel);
