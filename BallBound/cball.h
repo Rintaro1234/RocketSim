@@ -9,10 +9,16 @@ namespace Qt
 
 class QPainter;
 
+struct YandIdx
+{
+	float y;
+	uint32_t Idx;
+};
+
 struct lineComponent
 {
 	int32_t numComponent = 0;
-	uint16_t * Components;
+	YandIdx * Y_Idx;
 };
 
 struct spaceGrid

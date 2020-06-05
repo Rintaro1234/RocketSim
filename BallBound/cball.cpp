@@ -47,7 +47,8 @@ void CBall::UpdateMove(spaceGrid *grid, FLOAT_T dt)
 	for (int i = Lidx; i <= Ridx; i++)
 	{
 		lineComponent &X = grid->components[i];
-		X.Components[X.numComponent] = m_index;
+		X.Y_Idx[X.numComponent].Idx = m_index;
+		X.Y_Idx[X.numComponent].y = posData.m_Pos.y + posData.m_Radius;
 		X.numComponent++;
 	}
 }

@@ -51,7 +51,7 @@ protected:
 	int m_viewportSize = 0;
 
 	// どの順番でコリジョン処理をするかの表
-	int *m_CollisionTurn;
+	//int *m_CollisionTurn;
 
 	// FPS計測用タイマー
 	QTime m_fpsTime;

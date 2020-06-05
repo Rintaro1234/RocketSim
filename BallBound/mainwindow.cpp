@@ -4,6 +4,7 @@
 #include "profileapi.h"
 #include <inttypes.h>
 #include <ctime>
+#include <stdlib.h>
 
 int fps = 60;
 // 床となる放物線の係数
@@ -18,6 +19,8 @@ const int g_numCells = 16;
 int64_t sumTime = 0;
 // QueryPerformanceの一秒はどれくらいか。
 LARGE_INTEGER lpFrequency;
+
+int compare_YandIdx(const void *a, const void *b);
 
 FLOAT_T random(FLOAT_T x0, FLOAT_T x1)
 {
@@ -59,7 +62,8 @@ void MainWindow::resetState(void)
 	m_spaceGridA.components = new lineComponent[g_numCells];
 	for (int i = 0; i < g_numCells; i++)
 	{
-		m_spaceGridA.components[i].Components = new uint16_t[m_numBalls];
+		m_spaceGridA.components[i].Y_Idx = new YandIdx[m_numBalls];
+		m_spaceGridA.components[i].numComponent = m_numBalls;
 	}
 	m_spaceGridA.maxX = (FLOAT_T)m_maxPos / 1000.0f;
 	m_spaceGridA.minX = -(FLOAT_T)m_maxPos / 1000.0f;
@@ -85,7 +89,7 @@ void MainWindow::resetState(void)
 		m_balls[i].setBall(10, color, 1);
 	}
 
-	m_parallelGroup = parallelGenerator(m_numBalls, &m_numParallelGroup);
+	//m_parallelGroup = parallelGenerator(m_numBalls, &m_numParallelGroup);
 	QueryPerformanceFrequency(&lpFrequency);
 	//m_balls[0].setBall(40, ColorTable[0], 4);
 }
@@ -237,27 +241,35 @@ void MainWindow::timerEvent(QTimerEvent *)
 
 			LARGE_INTEGER start, end;
 			QueryPerformanceCounter(&start);
-			
-			// 空間わけのリセット
 
 			// 移動計算(コリジョンは無視)
-			#pragma omp parallel for
 			for (int i = 0; i < m_numBalls; i++)
 			{
 				m_balls[i].UpdateMove(&m_spaceGridA, div_dt);
 			}
 
+			// 一が高い順にソートする
+			#pragma omp parallel for
+			for (int i = 0; i < g_numCells; i++)
+			{
+				lineComponent &com = m_spaceGridA.components[i];
+				qsort(com.Y_Idx, com.numComponent, sizeof(YandIdx), compare_YandIdx);
+			}
+
 			// ボール同士のコリジョン
+			#pragma omp parallel for
 			for (int i = 0; i < m_spaceGridA.numCells; i++)
 			{
 				const lineComponent &com = m_spaceGridA.components[i];
 				for (int y = 0; y < com.numComponent; y++)
 				{
-					const int idx0 = com.Components[y];
+					const int idx0 = com.Y_Idx[y].Idx;
 					CBallPos &ballPos0 = m_ballsPos[idx0];
+					FLOAT_T buttomY = com.Y_Idx[y].y - m_ballsPos[y].m_Radius * 2;
 					for (int x = y + 1; x < com.numComponent; x++)
 					{
-						const int idx1 = com.Components[x];
+						if (com.Y_Idx[x].y < buttomY) break;
+						const int idx1 = com.Y_Idx[x].Idx;
 						if (ballPos0.GetInterspace(m_ballsPos[idx1]) < 0.0f)
 						{
 							m_balls[idx0].UpdateCollideBall(div_dt, m_balls[idx1]);
@@ -332,3 +344,9 @@ void MainWindow::timerEvent(QTimerEvent *)
 	repaint();
 }
 
+int compare_YandIdx(const void *a, const void *b) 
+{
+	const YandIdx &_a = *(const YandIdx *)a;
+	const YandIdx &_b = *(const YandIdx *)b;
+	return (_a.y < _b.y)? 1 : -1;
+}
