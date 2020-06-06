@@ -13,6 +13,25 @@ FLOAT_T CBall::sm_ReflectionCoef = 0.92f;
 Vector2f CBall::sm_Ft;
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// 内部パラメータの更新
+void CSpaceGrid::update(void)
+{
+	m_mulIdxInvWidth = (FLOAT_T)m_numCells / (m_wallR - m_wallL);
+}
+
+//-----------------------------------------------------------------------------
+// リセット
+void CSpaceGrid::reset(void)
+{
+	for (int i = 0; i < m_numCells; i++)
+	{
+		m_cells[i].numItems = 0;
+	}
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void CBall::move(FLOAT_T dt)
 {
 	CBallPos &posData = sm_posDataBuf[m_index];
@@ -24,7 +43,7 @@ void CBall::move(FLOAT_T dt)
 	posData.m_Pos = posData.m_Pos + (vel0 + m_Vel) * dt / 2.0f;
 }
 
-void CBall::UpdateMove(spaceGrid *grid, FLOAT_T dt)
+void CBall::UpdateMove(CSpaceGrid *grid, FLOAT_T dt)
 {
 	CBallPos &posData = sm_posDataBuf[m_index];
 
@@ -36,22 +55,22 @@ void CBall::UpdateMove(spaceGrid *grid, FLOAT_T dt)
 	move(dt);
 
 	// 各Cellにわける
-	FLOAT_T xx = posData.m_Pos.x - grid->minX;
+	FLOAT_T xx = posData.m_Pos.x - grid->m_wallL;
 	FLOAT_T lightSide = xx - posData.m_Radius;
 	FLOAT_T rightSide = xx + posData.m_Radius;
 	//	grid->mulIdxInvWidth = grid->numCells / (grid->maxX - grid->minX);
-	int Ridx = floor(rightSide * grid->mulIdxInvWidth);
-	int Lidx = floor(lightSide * grid->mulIdxInvWidth);
+	int Ridx = floor(rightSide * grid->m_mulIdxInvWidth);
+	int Lidx = floor(lightSide * grid->m_mulIdxInvWidth);
 	if (Lidx < 0) Lidx = 0;
-	const int N = grid->numCells - 1;
+	const int N = grid->m_numCells - 1;
 	if (N < Ridx) Ridx = N;
 	for (int i = Lidx; i <= Ridx; i++)
 	{
 		// ボールが入っている Cell に、ボールを登録する
-		lineComponent &X = grid->components[i];
-		X.Y_Idx[X.numComponent].Idx = m_index;
-		X.Y_Idx[X.numComponent].y = posData.m_Pos.y + posData.m_Radius;
-		X.numComponent++;
+		SpaceCell &X = grid->m_cells[i];
+		X.items[X.numItems].idx = m_index;
+		X.items[X.numItems].y = posData.m_Pos.y + posData.m_Radius;
+		X.numItems++;
 	}
 }
 
@@ -145,7 +164,7 @@ void CBall::UpdateCollideBall(FLOAT_T /*dt*/, CBall &other)
 }
 
 void CBall::UpdateCollideWall(
-	FLOAT_T dt, FLOAT_T maxPos, FLOAT_T ParabolaFactor,
+	FLOAT_T /*dt*/, FLOAT_T maxPos, FLOAT_T ParabolaFactor,
 	Vector2f &floorOffset, Vector2f &floorVel)
 {
 	CBallPos &posData = sm_posDataBuf[m_index];

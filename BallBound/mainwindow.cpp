@@ -34,7 +34,7 @@ FLOAT_T random(FLOAT_T x0, FLOAT_T x1)
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-	, m_spaceGridA(*(new spaceGrid))
+	, m_spaceGridA(*(new CSpaceGrid))
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -69,15 +69,15 @@ void MainWindow::resetState(void)
 	}
 
 	// 分割した空間に何のボールが入っているか確かめるための2次配列を作成
-	m_spaceGridA.components = new lineComponent[g_numCells];
+	m_spaceGridA.m_cells = new SpaceCell[g_numCells];
 	for (int i = 0; i < g_numCells; i++)
 	{
-		m_spaceGridA.components[i].Y_Idx = new YandIdx[m_numBalls];
-		m_spaceGridA.components[i].numComponent = m_numBalls;
+		m_spaceGridA.m_cells[i].items = new CellItem[m_numBalls];
+		m_spaceGridA.m_cells[i].numItems = m_numBalls;
 	}
-	m_spaceGridA.maxX = (FLOAT_T)m_maxPos / 1000.0f;
-	m_spaceGridA.minX = -(FLOAT_T)m_maxPos / 1000.0f;
-	m_spaceGridA.numCells = g_numCells;
+	m_spaceGridA.m_wallR = (FLOAT_T)m_maxPos / 1000.0f;
+	m_spaceGridA.m_wallL = -(FLOAT_T)m_maxPos / 1000.0f;
+	m_spaceGridA.m_numCells = g_numCells;
 
 	// リセット
 	m_spaceGridA.reset();
@@ -220,8 +220,8 @@ void MainWindow::timerEvent(QTimerEvent *)
 		floorOffset.y = (FLOAT_T)(-m_gridSize * windowMove.y()) / (FLOAT_T)(m_viewportSize * 1000);
 	}
 	// 地形のオフセット量を分割空間の座標に入れる
-	m_spaceGridA.maxX = (FLOAT_T)m_maxPos / 1000.0f + floorOffset.x;
-	m_spaceGridA.minX = -(FLOAT_T)m_maxPos / 1000.0f + floorOffset.x;
+	m_spaceGridA.m_wallR = (FLOAT_T)m_maxPos / 1000.0f + floorOffset.x;
+	m_spaceGridA.m_wallL = -(FLOAT_T)m_maxPos / 1000.0f + floorOffset.x;
 	m_spaceGridA.update();
 	// 地形コリジョンの移動速度を計算([m/s])
 	Vector2f floorVel = (floorOffset - m_floorOffset0) * (FLOAT_T)(fps);
@@ -262,8 +262,8 @@ void MainWindow::timerEvent(QTimerEvent *)
 			#pragma omp parallel for
 			for (int i = 0; i < g_numCells; i++)
 			{
-				lineComponent &com = m_spaceGridA.components[i];
-				qsort(com.Y_Idx, com.numComponent, sizeof(YandIdx), compare_YandIdx);
+				SpaceCell &com = m_spaceGridA.m_cells[i];
+				qsort(com.items, com.numItems, sizeof(CellItem), compare_YandIdx);
 			}
 
 			// ボール同士のコリジョン
@@ -273,18 +273,18 @@ void MainWindow::timerEvent(QTimerEvent *)
 			// これを抑制すると、ボールが積み上がった際に、底の方のボールが片方に
 			// 流れる症状が確認された。そのためこの処理は行わない。
 			#pragma omp parallel for
-			for (int i = 0; i < m_spaceGridA.numCells; i++)
+			for (int i = 0; i < m_spaceGridA.m_numCells; i++)
 			{
-				const lineComponent &com = m_spaceGridA.components[i];
-				for (int y = 0; y < com.numComponent; y++)
+				const SpaceCell &com = m_spaceGridA.m_cells[i];
+				for (int y = 0; y < com.numItems; y++)
 				{
-					const int idx0 = com.Y_Idx[y].Idx;
+					const int idx0 = com.items[y].idx;
 					CBallPos &ballPos0 = m_ballsPos[idx0];
-					FLOAT_T buttomY = com.Y_Idx[y].y - m_ballsPos[y].m_Radius * 2;
-					for (int x = y + 1; x < com.numComponent; x++)
+					FLOAT_T buttomY = com.items[y].y - m_ballsPos[y].m_Radius * 2;
+					for (int x = y + 1; x < com.numItems; x++)
 					{
-						if (com.Y_Idx[x].y < buttomY) break;
-						const int idx1 = com.Y_Idx[x].Idx;
+						if (com.items[x].y < buttomY) break;
+						const int idx1 = com.items[x].idx;
 
 						if (ballPos0.GetInterspace(m_ballsPos[idx1]) < 0.0f)
 						{
@@ -351,8 +351,8 @@ void MainWindow::timerEvent(QTimerEvent *)
 
 int compare_YandIdx(const void *a, const void *b) 
 {
-	const YandIdx &_a = *(const YandIdx *)a;
-	const YandIdx &_b = *(const YandIdx *)b;
+	const CellItem &_a = *(const CellItem *)a;
+	const CellItem &_b = *(const CellItem *)b;
 	return (_a.y < _b.y)? 1 : -1;
 }
 

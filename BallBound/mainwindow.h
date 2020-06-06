@@ -7,8 +7,8 @@
 #include "variable.h"
 
 class CBall;
-struct CBallPos;
-struct spaceGrid;
+class CBallPos;
+class CSpaceGrid;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -50,7 +50,7 @@ protected:
 	int m_maxPos = m_gridSize / 2;
 	int m_frameCounter = 0;
 	int m_numParallelGroup;
-	spaceGrid &m_spaceGridA;
+	CSpaceGrid &m_spaceGridA;
 
 	const int m_numBalls = 512;
 	CBallPos *m_ballsPos;
