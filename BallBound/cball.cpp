@@ -44,7 +44,6 @@ void CBall::UpdateMove(spaceGrid *grid, FLOAT_T dt)
 	if (Lidx < 0) Lidx = 0;
 	const int N = grid->numCells - 1;
 	if (N < Ridx) Ridx = N;
-	int32_t labelPos = 0;
 	for (int i = Lidx; i <= Ridx; i++)
 	{
 		// ボールが入っている Cell に、ボールを登録する
@@ -52,10 +51,7 @@ void CBall::UpdateMove(spaceGrid *grid, FLOAT_T dt)
 		X.Y_Idx[X.numComponent].Idx = m_index;
 		X.Y_Idx[X.numComponent].y = posData.m_Pos.y + posData.m_Radius;
 		X.numComponent++;
-		// ボールが入っている Cell を表すビットをセットする
-		labelPos |= (1 << i);
 	}
-	posData.m_LabelPos = labelPos;
 }
 
 // ボール間の隙間を求める

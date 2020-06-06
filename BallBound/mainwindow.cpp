@@ -261,7 +261,12 @@ void MainWindow::timerEvent(QTimerEvent *)
 			}
 
 			// ボール同士のコリジョン
-			//#pragma omp parallel for
+			// Note:
+			// 2つのボールが、複数の Cell にまたがっているとき、
+			// 各 Cell でコリジョンを重複してコリジョンチェックと反射計算がおきる。
+			// これを抑制すると、ボールが積み上がった際に、底の方のボールが片方に
+			// 流れる症状が確認された。そのためこの処理は行わない。
+			#pragma omp parallel for
 			for (int i = 0; i < m_spaceGridA.numCells; i++)
 			{
 				const lineComponent &com = m_spaceGridA.components[i];
@@ -275,22 +280,6 @@ void MainWindow::timerEvent(QTimerEvent *)
 						if (com.Y_Idx[x].y < buttomY) break;
 						const int idx1 = com.Y_Idx[x].Idx;
 
-						// Note:
-						// 2つのボールが、複数の Cell にまたがっているとき、
-						// 各 Cell でコリジョンを重複してコリジョンチェックと反射計算がおきる。
-						// これを抑制すると、ボールが積み上がった際に、底の方のボールが片方に
-						// 流れる症状が確認された。そのためこの処理は行わない。
-#if 0
-						const int32_t pair_bit = (ballPos0.m_LabelPos & m_ballsPos[idx1].m_LabelPos);
-						if (2 <= numofbits5(pair_bit))
-						{
-							// この Cell を表すビットをマスクし、残ったビットがこの Cell のビットよりも
-							// 大きければ、コリジョンチェックを行う。そうでなければ、チェックを行わない。
-							const int32_t cell_bit = (1 << i);
-							const int32_t b = ~cell_bit & pair_bit;
-							if (b < cell_bit) break;
-						}
-#endif
 						if (ballPos0.GetInterspace(m_ballsPos[idx1]) < 0.0f)
 						{
 							m_balls[idx0].UpdateCollideBall(div_dt, m_balls[idx1]);
@@ -298,17 +287,6 @@ void MainWindow::timerEvent(QTimerEvent *)
 					}
 				}
 			}
-			/*
-			for (int i = 0; i < m_numBalls; i++)
-			{
-				for (int j = i+1; j < m_numBalls; j++)
-				{
-					if (m_ballsPos[i].GetInterspace(m_ballsPos[j]) < 0.0f)
-					{
-						m_balls[i].UpdateCollideBall(div_dt, m_balls[j]);
-					}
-				}
-			}*/
 
 			// ボールと床のコリジョン
 			// 地形コリジョンのオフセットがある場合には、その移動も細分化する

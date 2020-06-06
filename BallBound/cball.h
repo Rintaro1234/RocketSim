@@ -54,7 +54,6 @@ struct alignas(16) CBallPos
 
 	Vector2f m_Pos{ 0, 0 };
 	FLOAT_T	 m_Radius = 20;
-	int32_t m_LabelPos;
 };
 
 class CBall
