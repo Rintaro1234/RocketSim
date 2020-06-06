@@ -8,7 +8,6 @@
 // App
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "parallelGroup.h"
 #include "cball.h"
 
 int fps = 60;
@@ -22,7 +21,7 @@ bool g_StepRun = false;
 const int g_numCells = 12;
 // 処理にかかった時間(0~1s)
 int64_t sumTime = 0;
-// QueryPerformanceの一秒はどれくらいか。
+// QueryPerformance() の一秒はどれくらいか。
 LARGE_INTEGER lpFrequency;
 
 int compare_YandIdx(const void *a, const void *b);
@@ -99,10 +98,10 @@ void MainWindow::resetState(void)
 		Qt::GlobalColor color = ColorTable[i % _countof(ColorTable)];
 		m_balls[i].setBall(10, color, 1);
 	}
-
-	//m_parallelGroup = parallelGenerator(m_numBalls, &m_numParallelGroup);
-	QueryPerformanceFrequency(&lpFrequency);
 	//m_balls[0].setBall(40, ColorTable[0], 4);
+
+	// 処理速度計測のためのカウンター周期を取得
+	QueryPerformanceFrequency(&lpFrequency);
 }
 
 void MainWindow::paintEvent(QPaintEvent *)

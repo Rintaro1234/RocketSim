@@ -5,7 +5,6 @@
 #include <QTime>
 
 #include "variable.h"
-#include "parallelGroup.h"
 
 class CBall;
 struct CBallPos;
@@ -52,7 +51,6 @@ protected:
 	int m_frameCounter = 0;
 	int m_numParallelGroup;
 	spaceGrid &m_spaceGridA;
-	ParallelGroup *m_parallelGroup;
 
 	const int m_numBalls = 512;
 	CBallPos *m_ballsPos;
