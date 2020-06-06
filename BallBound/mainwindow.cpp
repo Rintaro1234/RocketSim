@@ -39,6 +39,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 	// シミュレーションをリセット
 	resetState();
+
+	// マウスカーソルを、ドラッグ可能であることを示すハンドに変更
+	setCursor(QCursor(Qt::OpenHandCursor));
 }
 
 MainWindow::~MainWindow()
@@ -349,4 +352,36 @@ int compare_YandIdx(const void *a, const void *b)
 	const YandIdx &_a = *(const YandIdx *)a;
 	const YandIdx &_b = *(const YandIdx *)b;
 	return (_a.y < _b.y)? 1 : -1;
+}
+
+//-----------------------------------------------------------------------------
+// クリックによるドラッグ開始
+void MainWindow::mousePressEvent(QMouseEvent *event)
+{
+	QApplication::setOverrideCursor(QCursor(Qt::ClosedHandCursor));
+	m_dragMousePos0 = event->pos();
+	m_draggingWnd = true;
+}
+
+//-----------------------------------------------------------------------------
+// ウィンドウのドラッグ移動
+void MainWindow::mouseMoveEvent(QMouseEvent *event)
+{
+	// ドラッグ中でなければ何もしない
+	if (!m_draggingWnd) return;
+
+	// マウスの動きに追従してウィンドウをドラッグする。
+	// マウス座標はウィンドウ左上からの相対座標。
+	// ウィンドウ自体がマウスと一緒に移動するので、直前と同じ座標＋マウス移動量となる。
+	QPoint dt = event->pos() - m_dragMousePos0;
+	// 直前の座標＋マウス移動量でウィンドウを動かす
+	move(pos() + dt);
+}
+
+//-----------------------------------------------------------------------------
+// クリックによるドラッグ終了
+void MainWindow::mouseReleaseEvent(QMouseEvent */*event*/)
+{
+	QApplication::restoreOverrideCursor();
+	m_draggingWnd = false;
 }

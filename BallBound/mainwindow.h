@@ -24,6 +24,20 @@ public:
 	void timerEvent(QTimerEvent *);
 	void keyPressEvent(QKeyEvent *event);
 
+// クライアント領域をドラッグしてのウィンドウ移動
+protected:
+	// クリックによるウィンドウのドラッグ開始
+	virtual void mousePressEvent(QMouseEvent *event);
+	// クリックによるウィンドウのドラッグ終了
+	virtual void mouseReleaseEvent(QMouseEvent *event);
+	// ウィンドウのドラッグ移動
+	virtual void mouseMoveEvent(QMouseEvent *event);
+
+	// ドラッグ中フラグ
+	bool m_draggingWnd = false;
+	// ドラッグ開始時点でのマウス座標
+	QPoint m_dragMousePos0;
+
 protected:
 	// シミュレーションをリセットする
 	void resetState(void);
