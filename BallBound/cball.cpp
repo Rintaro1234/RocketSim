@@ -44,13 +44,18 @@ void CBall::UpdateMove(spaceGrid *grid, FLOAT_T dt)
 	if (Lidx < 0) Lidx = 0;
 	const int N = grid->numCells - 1;
 	if (N < Ridx) Ridx = N;
+	int32_t labelPos = 0;
 	for (int i = Lidx; i <= Ridx; i++)
 	{
+		// ボールが入っている Cell に、ボールを登録する
 		lineComponent &X = grid->components[i];
 		X.Y_Idx[X.numComponent].Idx = m_index;
 		X.Y_Idx[X.numComponent].y = posData.m_Pos.y + posData.m_Radius;
 		X.numComponent++;
+		// ボールが入っている Cell を表すビットをセットする
+		labelPos |= (1 << i);
 	}
+	posData.m_LabelPos = labelPos;
 }
 
 // ボール間の隙間を求める
@@ -104,8 +109,8 @@ void CBall::UpdateCollideBall(FLOAT_T /*dt*/, CBall &other)
 
 	#ifdef _DEBUG
 	{
-		FLOAT_T V0 = posData.m_Mass * m_Vel.GetLength();
-		FLOAT_T V1 = otherPosData.m_Mass * other.m_Vel.GetLength();
+		FLOAT_T V0 = m_Mass * m_Vel.GetLength();
+		FLOAT_T V1 = other.m_Mass * other.m_Vel.GetLength();
 		char buffer[256];
 		sprintf_s(buffer, "Before: V0 = %.3f V1 = %.3f V0 + V1 = %.3f\n", V0, V1, V0 + V1);
 		OutputDebugStringA(buffer);
@@ -115,7 +120,7 @@ void CBall::UpdateCollideBall(FLOAT_T /*dt*/, CBall &other)
 	// 重心を原点とした座標系で、反射計算を行う。
 	// そうすると、お互いの速度ベクトルが、反対向きの並行になるので、シンプルに計算できる。
 	// 重心からの相対速度
-	Vector2f Vc = ((posData.m_Mass * m_Vel) + (otherPosData.m_Mass * other.m_Vel)) / (posData.m_Mass + otherPosData.m_Mass);
+	Vector2f Vc = ((m_Mass * m_Vel) + (other.m_Mass * other.m_Vel)) / (m_Mass + other.m_Mass);
 	Vector2f Va = m_Vel - Vc;
 	Vector2f Vb = other.m_Vel - Vc;
 
@@ -133,8 +138,8 @@ void CBall::UpdateCollideBall(FLOAT_T /*dt*/, CBall &other)
 
 	#ifdef _DEBUG
 	{
-		FLOAT_T V0 = posData.m_Mass * m_Vel.GetLength();
-		FLOAT_T V1 = otherPosData.m_Mass * other.m_Vel.GetLength();
+		FLOAT_T V0 = m_Mass * m_Vel.GetLength();
+		FLOAT_T V1 = other.m_Mass * other.m_Vel.GetLength();
 		char buffer[256];
 		sprintf_s(buffer, "After: V0 = %.3f V1 = %.3f V0 + V1 = %.3f\n", V0, V1, V0 + V1);
 		OutputDebugStringA(buffer);
@@ -162,7 +167,7 @@ void CBall::UpdateCollideWall(
 			// 衝突エネルギーの計算
 			{
 				Vector2f V = m_Vel - m_baseVel;
-				sm_Ft = sm_Ft + posData.m_Mass * V; // エネルギー量[N]を入れる
+				sm_Ft = sm_Ft + m_Mass * V; // エネルギー量[N]を入れる
 			}
 		}
 	}
@@ -236,7 +241,7 @@ void CBall::UpdateCollideWall(
 			// 衝突エネルギーの計算
 			{
 				Vector2f V = m_Vel - m_baseVel;
-				sm_Ft = sm_Ft + posData.m_Mass * V; // エネルギー量[N]を入れる
+				sm_Ft = sm_Ft + m_Mass * V; // エネルギー量[N]を入れる
 			}
 		}
 	}
@@ -283,5 +288,5 @@ void CBall::setBall(int r, Qt::GlobalColor color, FLOAT_T mass)
 
 	posData.m_Radius = (FLOAT_T)r / 1000;
 	col = color;
-	posData.m_Mass = mass;
+	m_Mass = mass;
 }

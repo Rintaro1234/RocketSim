@@ -54,7 +54,7 @@ struct alignas(16) CBallPos
 
 	Vector2f m_Pos{ 0, 0 };
 	FLOAT_T	 m_Radius = 20;
-	FLOAT_T	 m_Mass = 10; // kg
+	int32_t m_LabelPos;
 };
 
 class CBall
@@ -84,6 +84,7 @@ public:
 	Vector2f m_Vel	  { 0, 0 };
 	Vector2f m_baseVel{ 0, 0 };
 	Vector2f m_basePos{ 0, 0 };
+	FLOAT_T	 m_Mass = 10; // kg
 	int32_t	m_index = 0;
 	Qt::GlobalColor col;
 

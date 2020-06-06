@@ -14,13 +14,14 @@ bool g_Pause = false;
 // ポーズ中のステップ実行
 bool g_StepRun = false;
 // 画面を立て分割する数
-const int g_numCells = 16;
+const int g_numCells = 12;
 // 処理にかかった時間(0~1s)
 int64_t sumTime = 0;
 // QueryPerformanceの一秒はどれくらいか。
 LARGE_INTEGER lpFrequency;
 
 int compare_YandIdx(const void *a, const void *b);
+int numofbits5(int32_t bits);
 
 FLOAT_T random(FLOAT_T x0, FLOAT_T x1)
 {
@@ -257,7 +258,7 @@ void MainWindow::timerEvent(QTimerEvent *)
 			}
 
 			// ボール同士のコリジョン
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for (int i = 0; i < m_spaceGridA.numCells; i++)
 			{
 				const lineComponent &com = m_spaceGridA.components[i];
@@ -270,6 +271,23 @@ void MainWindow::timerEvent(QTimerEvent *)
 					{
 						if (com.Y_Idx[x].y < buttomY) break;
 						const int idx1 = com.Y_Idx[x].Idx;
+
+						// Note:
+						// 2つのボールが、複数の Cell にまたがっているとき、
+						// 各 Cell でコリジョンを重複してコリジョンチェックと反射計算がおきる。
+						// これを抑制すると、ボールが積み上がった際に、底の方のボールが片方に
+						// 流れる症状が確認された。そのためこの処理は行わない。
+#if 0
+						const int32_t pair_bit = (ballPos0.m_LabelPos & m_ballsPos[idx1].m_LabelPos);
+						if (2 <= numofbits5(pair_bit))
+						{
+							// この Cell を表すビットをマスクし、残ったビットがこの Cell のビットよりも
+							// 大きければ、コリジョンチェックを行う。そうでなければ、チェックを行わない。
+							const int32_t cell_bit = (1 << i);
+							const int32_t b = ~cell_bit & pair_bit;
+							if (b < cell_bit) break;
+						}
+#endif
 						if (ballPos0.GetInterspace(m_ballsPos[idx1]) < 0.0f)
 						{
 							m_balls[idx0].UpdateCollideBall(div_dt, m_balls[idx1]);
@@ -349,4 +367,14 @@ int compare_YandIdx(const void *a, const void *b)
 	const YandIdx &_a = *(const YandIdx *)a;
 	const YandIdx &_b = *(const YandIdx *)b;
 	return (_a.y < _b.y)? 1 : -1;
+}
+
+// bit数を数えるプログラム
+int numofbits5(int32_t bits)
+{
+	bits = (bits & 0x55555555) + (bits >> 1 & 0x55555555);
+	bits = (bits & 0x33333333) + (bits >> 2 & 0x33333333);
+	bits = (bits & 0x0f0f0f0f) + (bits >> 4 & 0x0f0f0f0f);
+	bits = (bits & 0x00ff00ff) + (bits >> 8 & 0x00ff00ff);
+	return (bits & 0x0000ffff) + (bits >> 16 & 0x0000ffff);
 }
