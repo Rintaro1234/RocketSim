@@ -1,7 +1,8 @@
-﻿#include <QPainter>
+﻿#include "pch.h"
+#include <QPainter>
 #include "cball.h"
 #include "CubicEquation.h"
-#include <windows.h>
+
 using namespace std;
 
 FLOAT_T g = -9.8f;

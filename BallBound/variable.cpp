@@ -1,6 +1,7 @@
-﻿#include <cmath>
-#include "variable.h"
+﻿#include "pch.h"
+#include <cmath>
 #include <xmmintrin.h>
+#include "variable.h"
 
 //-----------------------------------------------------------------------------
 // 二点間の距離を求める

@@ -1,4 +1,4 @@
-﻿// CubicEquation.cpp : このファイルには 'main' 関数が含まれています。プログラム実行の開始と終了がそこで行われます。
+﻿// CubicEquation.cpp : 三次方程式の解を求める
 //
 #include <cmath>
 #include "CubicEquation.h"

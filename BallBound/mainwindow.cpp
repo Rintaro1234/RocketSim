@@ -1,10 +1,15 @@
-﻿#include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "parallelGroup.h"
-#include "profileapi.h"
+﻿#include "pch.h"
+
+// C/C++
 #include <inttypes.h>
 #include <ctime>
 #include <stdlib.h>
+
+// App
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include "parallelGroup.h"
+#include "cball.h"
 
 int fps = 60;
 // 床となる放物線の係数
@@ -30,6 +35,7 @@ FLOAT_T random(FLOAT_T x0, FLOAT_T x1)
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
+	, m_spaceGridA(*(new spaceGrid))
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -47,6 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+	delete &m_spaceGridA;
     delete ui;
 }
 

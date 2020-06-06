@@ -2,11 +2,14 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTime>
 
-#include "QtWidgets"
-#include "cball.h"
 #include "variable.h"
 #include "parallelGroup.h"
+
+class CBall;
+struct CBallPos;
+struct spaceGrid;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -48,7 +51,7 @@ protected:
 	int m_maxPos = m_gridSize / 2;
 	int m_frameCounter = 0;
 	int m_numParallelGroup;
-	spaceGrid m_spaceGridA;
+	spaceGrid &m_spaceGridA;
 	ParallelGroup *m_parallelGroup;
 
 	const int m_numBalls = 512;
