@@ -376,7 +376,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
 
 //-----------------------------------------------------------------------------
 // クリックによるドラッグ終了
-void MainWindow::mouseReleaseEvent(QMouseEvent */*event*/)
+void MainWindow::mouseReleaseEvent(QMouseEvent * /*event*/)
 {
 	QApplication::restoreOverrideCursor();
 	m_draggingWnd = false;
