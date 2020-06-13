@@ -5,7 +5,7 @@
 
 using namespace std;
 
-FLOAT_T g = -9.8f;
+FLOAT_T G = -9.8f;
 FLOAT_T boxSize = 0;
 
 CBallPos *CBall::sm_posDataBuf = nullptr;
@@ -39,7 +39,9 @@ void CBall::move(FLOAT_T dt)
 	// 前回の結果を記録
 	Vector2f vel0 = m_Vel;
 	// 計算
-	m_Vel.y = vel0.y + (g * dt);
+	// 力[N] → 加速度[m/s^2] → 速度[m/s] → 位置[m]
+	Vector2f acc = m_Force / m_Mass;
+	m_Vel = vel0 + (acc * dt);
 	posData.m_Pos = posData.m_Pos + (vel0 + m_Vel) * dt / 2.0f;
 }
 
@@ -50,6 +52,10 @@ void CBall::UpdateMove(CSpaceGrid *grid, FLOAT_T dt)
 	// シミュレーションをリセットするために、初期状態を保存する
 	m_baseVel = m_Vel;
 	m_basePos = posData.m_Pos;
+
+	// ボールにかかる力
+	// まずは重力
+	m_Force = Vector2f{ 0.0f, G*m_Mass };
 
 	// 移動計算
 	move(dt);
@@ -141,16 +147,23 @@ void CBall::UpdateCollideBall(FLOAT_T /*dt*/, CBall &other)
 	Vector2f Vb = other.m_Vel - Vc;
 
 	// 反射計算
-	Vector2f N = (otherPosData.m_Pos - posData.m_Pos).normalize();
+	// L,N : 2つのボール間のベクトル
+	Vector2f L = (otherPosData.m_Pos - posData.m_Pos);
+	Vector2f N = L.normalize();
 	Va = N.reflect(Va) * sm_ReflectionCoef;
 	Vb = N.reflect(Vb) * sm_ReflectionCoef;
 	// 重心座標系から、通常の座標系に戻す
 	m_Vel = (Va + Vc);
 	other.m_Vel = (Vb + Vc);
-	// 位置を、衝突した瞬間に移動(近似)
-	Vector2f ct = posData.m_Pos + (otherPosData.m_Pos - posData.m_Pos) * posData.m_Radius / (posData.m_Radius + otherPosData.m_Radius);
-	posData.m_Pos		= ct - N * posData.m_Radius;
-	otherPosData.m_Pos  = ct + N * otherPosData.m_Radius;
+	// 重ならない位置まで離す
+	{
+		// ct : 2つのボール間の、大きさを考慮した中心
+		const float r0 = posData.m_Radius;
+		const float r1 = otherPosData.m_Radius;
+		Vector2f ct = posData.m_Pos + L * r0 / (r0 + r1);
+		posData.m_Pos	   = ct - (N * r0);
+		otherPosData.m_Pos = ct + (N * r1);
+	}
 
 	#ifdef _DEBUG
 	{
@@ -298,11 +311,11 @@ void CBall::setInitialValue(Vector2f initialPos, Vector2f speed)
 	m_Vel = speed;
 }
 
-void CBall::setBall(int r, Qt::GlobalColor color, FLOAT_T mass)
+void CBall::setBall(FLOAT_T r, Qt::GlobalColor color, FLOAT_T mass)
 {
 	CBallPos &posData = sm_posDataBuf[m_index];
 
-	posData.m_Radius = (FLOAT_T)r / 1000;
+	posData.m_Radius = r;
 	col = color;
 	m_Mass = mass;
 }

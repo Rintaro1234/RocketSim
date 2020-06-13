@@ -82,8 +82,9 @@ public:
 	void UpdateCollideBall(FLOAT_T dt, CBall &other);
 	// 最初の位置
 	void setInitialValue(Vector2f initialPos, Vector2f speed);
-	// 色と半径
-	void setBall(int r, Qt::GlobalColor color, FLOAT_T mass);
+	// ボールのパラメータを設定
+	// 半径、色、質量
+	void setBall(FLOAT_T r, Qt::GlobalColor color, FLOAT_T mass);
 	// 落下と移動
 	void move(FLOAT_T dt);
 
@@ -93,6 +94,7 @@ public:
 		FLOAT_T	 m_Mass = 10; // kg
 	*/
 
+	Vector2f m_Force  { 0, 0 };
 	Vector2f m_Vel	  { 0, 0 };
 	Vector2f m_baseVel{ 0, 0 };
 	Vector2f m_basePos{ 0, 0 };

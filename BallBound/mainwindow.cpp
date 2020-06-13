@@ -96,7 +96,7 @@ void MainWindow::resetState(void)
 		Vector2f speed{ random(-speedRange, speedRange), 0 };
 		m_balls[i].setInitialValue(Pos, speed);
 		Qt::GlobalColor color = ColorTable[i % _countof(ColorTable)];
-		m_balls[i].setBall(10, color, 1);
+		m_balls[i].setBall(0.01f, color, 1);
 	}
 	//m_balls[0].setBall(40, ColorTable[0], 4);
 
