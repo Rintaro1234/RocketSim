@@ -116,3 +116,44 @@ public:
 	static FLOAT_T sm_ReflectionCoef;
 	static Vector2f sm_Ft;
 };
+
+//-----------------------------------------------------------------------------
+// シミュレーション
+class CSimulator
+{
+public:
+	CSimulator(int numBalls, FLOAT_T simSpaceW, FLOAT_T floorParabolaFactor);
+	~CSimulator(void);
+
+	// 1ステップシミュレーションをすすめる
+	void proceed(FLOAT_T dt,
+		Vector2f &floorOffset, Vector2f &floorVel);
+
+	// シミュレーションをリセットする
+	void resetState(void);
+
+	// ボール配列を参照
+	CBall *GetBallArray(int *num)
+	{
+		*num = m_numBalls;
+		return m_balls;
+	}
+
+protected:
+	// ボールの数
+	const int m_numBalls;
+	// ボールの配列
+	CBall *m_balls;
+	// ボール位置データの配列
+	CBallPos *m_ballsPos;
+
+	// コリジョンチェックを縦に分割する数
+	const int m_numCells = 12;
+	// コリジョンチェックの分割領域
+	CSpaceGrid m_spaceGridA;
+
+	// シミュレーション空間の幅
+	FLOAT_T m_simSpaceW;
+	// 床のパラメータ
+	FLOAT_T m_floorParabolaFactor;
+};

@@ -8,7 +8,7 @@
 
 class CBall;
 class CBallPos;
-class CSpaceGrid;
+class CSimulator;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -40,22 +40,6 @@ protected:
 	// ドラッグ開始時点でのマウス座標
 	QPoint m_dragMousePos0;
 
-protected:
-	// シミュレーションをリセットする
-	void resetState(void);
-
-	int m_gridNumber = 12;
-	int m_gridSpan = 50;
-	int m_gridSize = m_gridNumber * m_gridSpan;
-	int m_maxPos = m_gridSize / 2;
-	int m_frameCounter = 0;
-	int m_numParallelGroup;
-	CSpaceGrid &m_spaceGridA;
-
-	const int m_numBalls = 384;
-	CBallPos *m_ballsPos;
-	CBall *m_balls;
-
 	// 起動時のウィンドウの位置(ウィンドウドラッグによるコリジョン遊びで参照)
 	QPoint m_initWindowPos{ 0, 0 };
 	// 初回のシミュレーション更新のフラグ(ウィンドウドラッグによるコリジョン遊びで参照)
@@ -63,6 +47,20 @@ protected:
 	// 直前のシミュレーションでの、コリジョンのオフセット
 	Vector2f m_floorOffset0{ 0.0f, 0.0f };
 
+protected:
+	// シミュレーションをリセットする
+	void resetState(void);
+
+	// シミュレーション実行
+	CSimulator *m_simulator = nullptr;
+
+	// グリッドのパラメータ
+	int m_gridNumber = 12;
+	int m_gridSpan = 50;
+	int m_gridSize = m_gridNumber * m_gridSpan;
+	int m_maxPos = m_gridSize / 2;
+	int m_frameCounter = 0;
+	int m_numParallelGroup;
 	int m_viewportSize = 0;
 
 	// どの順番でコリジョン処理をするかの表

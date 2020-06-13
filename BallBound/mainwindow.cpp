@@ -10,36 +10,34 @@
 #include "ui_mainwindow.h"
 #include "cball.h"
 
-int fps = 60;
+// ボールの数
+const int g_numBalls = 128;
+
+// シミュレーションの時間分解能
+const int fps = 60;
+
 // 床となる放物線の係数
-FLOAT_T g_ParabolaFactor = 2.0f;
+const FLOAT_T g_ParabolaFactor = 2.0f;
+
 // シミュレーションのポーズ
 bool g_Pause = false;
 // ポーズ中のステップ実行
 bool g_StepRun = false;
-// 画面を立て分割する数
-const int g_numCells = 12;
 // 処理にかかった時間(0~1s)
 int64_t sumTime = 0;
 // QueryPerformance() の一秒はどれくらいか。
 LARGE_INTEGER lpFrequency;
 
-int compare_YandIdx(const void *a, const void *b);
 int numofbits5(int32_t bits);
 
-FLOAT_T random(FLOAT_T x0, FLOAT_T x1)
-{
-	return x0 + (x1 - x0) / 256.0f * (FLOAT_T)(std::rand() / (RAND_MAX / 256));
-}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-	, m_spaceGridA(*(new CSpaceGrid))
     , ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
-	startTimer(1000 / fps);
-
+	// 処理速度計測のためのカウンター周期を取得
+	QueryPerformanceFrequency(&lpFrequency);
+	
 	// 乱数のシードを切り替える
 	std::srand(std::time(0));
 
@@ -48,77 +46,25 @@ MainWindow::MainWindow(QWidget *parent)
 
 	// マウスカーソルを、ドラッグ可能であることを示すハンドに変更
 	setCursor(QCursor(Qt::OpenHandCursor));
+
+	// 画面更新のタイマーをスタート
+	ui->setupUi(this);
+	startTimer(1000 / fps);
 }
 
 MainWindow::~MainWindow()
 {
-	delete &m_spaceGridA;
+	if(m_simulator) delete m_simulator;
     delete ui;
 }
 
 // シミュレーションをリセットする
 void MainWindow::resetState(void)
 {
-	// ボールのインスタンスを配列として作成
-	m_ballsPos = new CBallPos[m_numBalls];
-	CBall::sm_posDataBuf = m_ballsPos;
-	m_balls = new CBall[m_numBalls];
-	for (int i = 0; i < m_numBalls; i++)
-	{
-		m_balls[i].m_index = i;
-	}
-
-	// 分割した空間に何のボールが入っているか確かめるための2次配列を作成
-	m_spaceGridA.m_cells = new SpaceCell[g_numCells];
-	for (int i = 0; i < g_numCells; i++)
-	{
-		m_spaceGridA.m_cells[i].items = new CellItem[m_numBalls];
-		m_spaceGridA.m_cells[i].numItems = m_numBalls;
-	}
-	m_spaceGridA.m_wallR = (FLOAT_T)m_maxPos / 1000.0f;
-	m_spaceGridA.m_wallL = -(FLOAT_T)m_maxPos / 1000.0f;
-	m_spaceGridA.m_numCells = g_numCells;
-
-	// リセット
-	m_spaceGridA.reset();
-
-	// ボールの初期位置と初速度を乱数で決める
-	// (ついでに色も)
-	FLOAT_T left = (FLOAT_T)-m_maxPos / 1000.0f;
-	FLOAT_T right = (FLOAT_T)m_maxPos / 1000.0f;
-	FLOAT_T top = 0.6f;
-	FLOAT_T bottom = 0.2f;
-	FLOAT_T speedRange = 0.5f;
-	FLOAT_T R = 0.011f;
-	FLOAT_T R2 = 0.010f;
-	Qt::GlobalColor ColorTable[] = { Qt::red, Qt::blue, Qt::green, Qt::cyan, Qt::yellow };
-	for (int i = 0; i < m_numBalls; i++)
-	{
-		Qt::GlobalColor color = ColorTable[i % _countof(ColorTable)];
-		m_balls[i].setBall(R, R2, color, 1);
-
-		// すでに作成済みのボールとぶつからない位置に配置できるまで、繰り返す。
-		// 100回やってダメなら諦める。
-		Vector2f speed{ random(-speedRange, speedRange), 0 };
-		for(int k = 0; k < 100; k++)
-		{
-			Vector2f Pos{ random(left+R2, right-R2), random(top, bottom) };
-			m_balls[i].setInitialValue(Pos, speed);
-
-			bool ok = true;
-			for (int j = 0; j < i; j++)
-			{
-				FLOAT_T d = m_ballsPos[i].GetInterspace(m_ballsPos[j]);
-				ok &= (0.0f <= d);
-				if (!ok) break;
-			}
-			if (ok) break;
-		}
-	}
-	//m_balls[0].setBall(40, ColorTable[0], 4);
-
-	// 処理速度計測のためのカウンター周期を取得
-	QueryPerformanceFrequency(&lpFrequency);
+	if (m_simulator) delete m_simulator;
+	FLOAT_T simSpaceW = (FLOAT_T)(2 * m_maxPos) / 1000.0f;
+	m_simulator = new CSimulator(g_numBalls, simSpaceW, g_ParabolaFactor);
+	m_simulator->resetState();
 }
 
 void MainWindow::paintEvent(QPaintEvent *)
@@ -186,12 +132,15 @@ void MainWindow::paintEvent(QPaintEvent *)
 		painter.drawLine((m_maxPos + offsetX), offsetY, (m_maxPos + offsetX), 2 * m_maxPos + offsetY);
 	}
 	// ボール
-#if 1
-	for (int i = 0; i < m_numBalls; i++)
+	if (m_simulator)
 	{
-		m_balls[i].draw(painter);
+		int numBalls;
+		CBall *balls = m_simulator->GetBallArray(&numBalls);
+		for (int i = 0; i < numBalls; i++)
+		{
+			balls[i].draw(painter);
+		}
 	}
-#endif
 
 	// FPS
 	painter.setViewport(0, 0, width(), height());
@@ -246,10 +195,6 @@ void MainWindow::timerEvent(QTimerEvent *)
 		floorOffset.x = (FLOAT_T)(m_gridSize * windowMove.x()) / (FLOAT_T)(m_viewportSize * 1000);
 		floorOffset.y = (FLOAT_T)(-m_gridSize * windowMove.y()) / (FLOAT_T)(m_viewportSize * 1000);
 	}
-	// 地形のオフセット量を分割空間の座標に入れる
-	m_spaceGridA.m_wallR = (FLOAT_T)m_maxPos / 1000.0f + floorOffset.x;
-	m_spaceGridA.m_wallL = -(FLOAT_T)m_maxPos / 1000.0f + floorOffset.x;
-	m_spaceGridA.update();
 	// 地形コリジョンの移動速度を計算([m/s])
 	Vector2f floorVel = (floorOffset - m_floorOffset0) * (FLOAT_T)(fps);
 
@@ -273,64 +218,21 @@ void MainWindow::timerEvent(QTimerEvent *)
 
 		for (int a = 0; a < stepCount; a++)
 		{
-			// 空間わけのリセット
-			m_spaceGridA.reset();
-
+			// 処理時間計測
 			LARGE_INTEGER start, end;
 			QueryPerformanceCounter(&start);
 
-			// 移動計算(コリジョンは無視)
-			for (int i = 0; i < m_numBalls; i++)
-			{
-				m_balls[i].UpdateMove(&m_spaceGridA, div_dt);
-			}
-
-			// 一が高い順にソートする
-			#pragma omp parallel for
-			for (int i = 0; i < g_numCells; i++)
-			{
-				SpaceCell &com = m_spaceGridA.m_cells[i];
-				qsort(com.items, com.numItems, sizeof(CellItem), compare_YandIdx);
-			}
-
-			// ボール同士のコリジョン
-			// Note:
-			// 2つのボールが、複数の Cell にまたがっているとき、
-			// 各 Cell でコリジョンを重複してコリジョンチェックと反射計算がおきる。
-			// これを抑制すると、ボールが積み上がった際に、底の方のボールが片方に
-			// 流れる症状が確認された。そのためこの処理は行わない。
-			#pragma omp parallel for
-			for (int i = 0; i < m_spaceGridA.m_numCells; i++)
-			{
-				const SpaceCell &com = m_spaceGridA.m_cells[i];
-				for (int y = 0; y < com.numItems; y++)
-				{
-					const int idx0 = com.items[y].idx;
-					CBallPos &ballPos0 = m_ballsPos[idx0];
-					FLOAT_T buttomY = com.items[y].y - m_ballsPos[y].m_Radius * 2;
-					for (int x = y + 1; x < com.numItems; x++)
-					{
-						if (com.items[x].y < buttomY) break;
-						const int idx1 = com.items[x].idx;
-
-						if (ballPos0.GetInterspace(m_ballsPos[idx1]) < 0.0f)
-						{
-							m_balls[idx0].UpdateCollideBall(div_dt, m_balls[idx1]);
-						}
-					}
-				}
-			}
-
-			// ボールと床のコリジョン
 			// 地形コリジョンのオフセットがある場合には、その移動も細分化する
-			Vector2f co = m_floorOffset0 + (a + 1) * (floorOffset - m_floorOffset0) / stepCount;
-			// 並行実行(マルチスレッド)
-			#pragma omp parallel for
-			for (int i = 0; i < m_numBalls; i++)
+			Vector2f stepFloorOffset = 
+				m_floorOffset0 + (a + 1) * (floorOffset - m_floorOffset0) / stepCount;
+
+			// シミュレーションを1ステップ進める
+			if (m_simulator)
 			{
-				m_balls[i].UpdateCollideWall(div_dt, (FLOAT_T)m_maxPos / 1000.0f, g_ParabolaFactor, co, floorVel);
+				m_simulator->proceed(div_dt, stepFloorOffset, floorVel);
 			}
 
+			// 処理時間計測
 			QueryPerformanceCounter(&end);
 			sumTime += end.QuadPart - start.QuadPart;
 			m_lpFrameCounter++;
@@ -374,13 +276,6 @@ void MainWindow::timerEvent(QTimerEvent *)
 
 	// 画面を即座に再描画
 	repaint();
-}
-
-int compare_YandIdx(const void *a, const void *b) 
-{
-	const CellItem &_a = *(const CellItem *)a;
-	const CellItem &_b = *(const CellItem *)b;
-	return (_a.y < _b.y)? 1 : -1;
 }
 
 //-----------------------------------------------------------------------------
