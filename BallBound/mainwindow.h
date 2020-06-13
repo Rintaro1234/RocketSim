@@ -52,7 +52,7 @@ protected:
 	int m_numParallelGroup;
 	CSpaceGrid &m_spaceGridA;
 
-	const int m_numBalls = 512;
+	const int m_numBalls = 384;
 	CBallPos *m_ballsPos;
 	CBall *m_balls;
 

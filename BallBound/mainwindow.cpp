@@ -87,16 +87,33 @@ void MainWindow::resetState(void)
 	FLOAT_T left = (FLOAT_T)-m_maxPos / 1000.0f;
 	FLOAT_T right = (FLOAT_T)m_maxPos / 1000.0f;
 	FLOAT_T top = 0.6f;
-	FLOAT_T bottom = 0.4f;
+	FLOAT_T bottom = 0.2f;
 	FLOAT_T speedRange = 0.5f;
+	FLOAT_T R = 0.011f;
+	FLOAT_T R2 = 0.010f;
 	Qt::GlobalColor ColorTable[] = { Qt::red, Qt::blue, Qt::green, Qt::cyan, Qt::yellow };
 	for (int i = 0; i < m_numBalls; i++)
 	{
-		Vector2f Pos{ random(left, right), random(top, bottom) };
-		Vector2f speed{ random(-speedRange, speedRange), 0 };
-		m_balls[i].setInitialValue(Pos, speed);
 		Qt::GlobalColor color = ColorTable[i % _countof(ColorTable)];
-		m_balls[i].setBall(0.01f, color, 1);
+		m_balls[i].setBall(R, R2, color, 1);
+
+		// すでに作成済みのボールとぶつからない位置に配置できるまで、繰り返す。
+		// 100回やってダメなら諦める。
+		Vector2f speed{ random(-speedRange, speedRange), 0 };
+		for(int k = 0; k < 100; k++)
+		{
+			Vector2f Pos{ random(left+R2, right-R2), random(top, bottom) };
+			m_balls[i].setInitialValue(Pos, speed);
+
+			bool ok = true;
+			for (int j = 0; j < i; j++)
+			{
+				FLOAT_T d = m_ballsPos[i].GetInterspace(m_ballsPos[j]);
+				ok &= (0.0f <= d);
+				if (!ok) break;
+			}
+			if (ok) break;
+		}
 	}
 	//m_balls[0].setBall(40, ColorTable[0], 4);
 

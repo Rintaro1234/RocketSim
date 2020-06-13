@@ -63,8 +63,8 @@ public:
 
 	// 中心座標
 	Vector2f m_Pos{ 0, 0 };
-	// 半径
-	FLOAT_T	 m_Radius = 20;
+	// 半径(ボール同士のコリジョン)
+	FLOAT_T	 m_Radius = 0.01f;
 };
 
 //-----------------------------------------------------------------------------
@@ -79,12 +79,20 @@ public:
 	void UpdateCollideWall(
 		FLOAT_T dt, FLOAT_T maxPos, FLOAT_T ParabolaFactor,
 		Vector2f &floorOffset, Vector2f &floorVel);
+
+	// ボール同士の衝突による反射
 	void UpdateCollideBall(FLOAT_T dt, CBall &other);
+	// ボール同士の衝突による反射(剛体)
+	void UpdateCollideRigidBall(FLOAT_T dt, CBall &other);
+	// ボール同士の衝突による反射(軟体)
+	void UpdateCollideSoftBall(FLOAT_T dt, CBall &other);
+
+
 	// 最初の位置
 	void setInitialValue(Vector2f initialPos, Vector2f speed);
 	// ボールのパラメータを設定
 	// 半径、色、質量
-	void setBall(FLOAT_T r, Qt::GlobalColor color, FLOAT_T mass);
+	void setBall(FLOAT_T r, FLOAT_T r2, Qt::GlobalColor color, FLOAT_T mass);
 	// 落下と移動
 	void move(FLOAT_T dt);
 
@@ -99,6 +107,8 @@ public:
 	Vector2f m_baseVel{ 0, 0 };
 	Vector2f m_basePos{ 0, 0 };
 	FLOAT_T	 m_Mass = 10; // kg
+	// 硬殻半径(地面コリジョン、描画)
+	FLOAT_T  m_Radius2 = 0.01f;
 	int32_t	m_index = 0;
 	Qt::GlobalColor col;
 

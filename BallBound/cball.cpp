@@ -5,7 +5,7 @@
 
 using namespace std;
 
-FLOAT_T G = -9.8f;
+FLOAT_T G = 9.8f;
 FLOAT_T boxSize = 0;
 
 CBallPos *CBall::sm_posDataBuf = nullptr;
@@ -53,12 +53,12 @@ void CBall::UpdateMove(CSpaceGrid *grid, FLOAT_T dt)
 	m_baseVel = m_Vel;
 	m_basePos = posData.m_Pos;
 
-	// ボールにかかる力
-	// まずは重力
-	m_Force = Vector2f{ 0.0f, G*m_Mass };
-
 	// 移動計算
 	move(dt);
+
+	// ボールにかかる力をリセット
+	// まずは重力
+	m_Force = Vector2f{ 0.0f, -G*m_Mass };
 
 	// 各Cellにわける
 	FLOAT_T xx = posData.m_Pos.x - grid->m_wallL;
@@ -100,25 +100,26 @@ float CBallPos::GetInterspace(const CBallPos &ball) const
 	return dis;
 }
 
-void CBall::UpdateCollideBall(FLOAT_T /*dt*/, CBall &other)
+void CBall::UpdateCollideBall(FLOAT_T dt, CBall &other)
 {
 	// 本関数の外で衝突判定を行い、衝突のあるペアのみ処理する。
 #if 0
 	// 衝突がなければ何もしない
-#if 0
-	FLOAT_T dis = m_Pos.GetDistance(other.m_Pos);
-	if ((m_Radius + other.m_Radius) < dis)
-	{
-		return;
-	}
-#else
-	if (0.0f < m_posData->GetInterspace(*other.m_posData))
+	if (0.0f <= m_Pos.GetDistance(other.m_Pos))
 	{
 		return;
 	}
 #endif
-#endif
+	// ボール同士の衝突による反射(剛体)
+//	UpdateCollideRigidBall(dt, other);
+	// ボール同士の衝突による反射(軟体)
+	UpdateCollideSoftBall(dt, other);
+}
 
+//-----------------------------------------------------------------------------
+// ボール同士の衝突による反射(剛体)
+void CBall::UpdateCollideRigidBall(FLOAT_T /*dt*/, CBall &other)
+{
 	CBallPos &posData = sm_posDataBuf[m_index];
 	CBallPos &otherPosData = sm_posDataBuf[other.m_index];
 
@@ -128,16 +129,6 @@ void CBall::UpdateCollideBall(FLOAT_T /*dt*/, CBall &other)
 		Vector2f D = otherPosData.m_Pos - posData.m_Pos;
 		if (0.0f <= V.dot(D)) return;
 	}
-
-	#ifdef _DEBUG
-	{
-		FLOAT_T V0 = m_Mass * m_Vel.GetLength();
-		FLOAT_T V1 = other.m_Mass * other.m_Vel.GetLength();
-		char buffer[256];
-		sprintf_s(buffer, "Before: V0 = %.3f V1 = %.3f V0 + V1 = %.3f\n", V0, V1, V0 + V1);
-		OutputDebugStringA(buffer);
-	}
-	#endif
 
 	// 重心を原点とした座標系で、反射計算を行う。
 	// そうすると、お互いの速度ベクトルが、反対向きの並行になるので、シンプルに計算できる。
@@ -161,35 +152,70 @@ void CBall::UpdateCollideBall(FLOAT_T /*dt*/, CBall &other)
 		const float r0 = posData.m_Radius;
 		const float r1 = otherPosData.m_Radius;
 		Vector2f ct = posData.m_Pos + L * r0 / (r0 + r1);
-		posData.m_Pos	   = ct - (N * r0);
+		posData.m_Pos = ct - (N * r0);
 		otherPosData.m_Pos = ct + (N * r1);
 	}
-
-	#ifdef _DEBUG
-	{
-		FLOAT_T V0 = m_Mass * m_Vel.GetLength();
-		FLOAT_T V1 = other.m_Mass * other.m_Vel.GetLength();
-		char buffer[256];
-		sprintf_s(buffer, "After: V0 = %.3f V1 = %.3f V0 + V1 = %.3f\n", V0, V1, V0 + V1);
-		OutputDebugStringA(buffer);
-	}
-	#endif
 }
 
+//-----------------------------------------------------------------------------
+// ボール同士の衝突による反射(軟体)
+void CBall::UpdateCollideSoftBall(FLOAT_T /*dt*/, CBall &other)
+{
+	CBallPos &posData = sm_posDataBuf[m_index];
+	CBallPos &otherPosData = sm_posDataBuf[other.m_index];
+
+	// ボールを離す方向に力を発生させる
+	Vector2f L = (otherPosData.m_Pos - posData.m_Pos);
+	Vector2f N = L.normalize();
+	const FLOAT_T r0 = posData.m_Radius;
+	const FLOAT_T r1 = otherPosData.m_Radius;
+	{
+		// めり込み距離 mg で、1G の加速度となる力を発生
+		const FLOAT_T mg = 0.05f * (r0 + r1);
+
+		// dentedDepth : めり込んだ距離[m]
+		const FLOAT_T dist = L.GetLength();
+		float dentedDepth = (r0 + r1) - dist;
+		if (dentedDepth < 0.0f) dentedDepth = 0.0f;
+		// F : 反力[N]
+		const FLOAT_T F = (m_Mass + other.m_Mass) * G * (dentedDepth / mg);
+		m_Force = m_Force - (N * F);
+		other.m_Force = other.m_Force + (N * F);
+	}
+
+	// ダンパー
+	{
+		// 相対速度 ms で、1G の加速度となる減衰力を発生
+		const FLOAT_T ms = 20.0f * (r0 + r1);
+
+		// rs : 相対速度[m/s]
+		Vector2f relativeVel = other.m_Vel - m_Vel;
+		const FLOAT_T rs = N.dot(relativeVel);
+		// F : 減衰力[N]
+		const FLOAT_T F = (m_Mass + other.m_Mass) * G * (rs / ms);
+		m_Force = m_Force + (N * F);
+		other.m_Force = other.m_Force - (N * F);
+	}
+}
+
+//-----------------------------------------------------------------------------
 void CBall::UpdateCollideWall(
 	FLOAT_T /*dt*/, FLOAT_T maxPos, FLOAT_T ParabolaFactor,
 	Vector2f &floorOffset, Vector2f &floorVel)
 {
 	CBallPos &posData = sm_posDataBuf[m_index];
 
+	// 地面との接触では、硬殻半径を用いる
+	const FLOAT_T r = m_Radius2;
+
 	// 接地判定
 	if (ParabolaFactor == 0)
 	{
 		// 地形が平面の場合
-		if ((posData.m_Pos.y - posData.m_Radius) <= floorOffset.y)
+		if ((posData.m_Pos.y - r) <= floorOffset.y)
 		{
 			// オフセットされた床に対して位置を修正
-			posData.m_Pos.y = floorOffset.y + posData.m_Radius;
+			posData.m_Pos.y = floorOffset.y + r;
 			// 質量無限大の床とボールの反射計算
 			m_Vel.y = ((-m_Vel.y + floorVel.y) * sm_ReflectionCoef) + floorVel.y;
 
@@ -244,7 +270,7 @@ void CBall::UpdateCollideWall(
 
 		// ボールと、最も近い二次曲線上の点との距離が、ボールの半径より小さければ、コリジョンあり
 		FLOAT_T floorDistance = bp.GetDistance(p);
-		if (floorDistance <= posData.m_Radius)
+		if (floorDistance <= r)
 		{
 			// 接線T
 			// Note: 放物線を示す二次式(y = pf * x^2)の微分(y = 2 * pf * x)
@@ -263,7 +289,7 @@ void CBall::UpdateCollideWall(
 			// 地面座標系での反射を、シミュレーション座標系に戻す
 			m_Vel = m_Vel + floorVel;
 			// ボールの位置を衝突の瞬間へ戻す
-			posData.m_Pos = p + (posData.m_Radius * N);
+			posData.m_Pos = p + (r * N);
 			// ボールの座標を放物線座標系から、シミュレーション座標系へ戻す
 			posData.m_Pos = posData.m_Pos + floorOffset;
 
@@ -276,16 +302,16 @@ void CBall::UpdateCollideWall(
 	}
 
 	// 壁との衝突判定
-	if ((maxPos + floorOffset.x) <= (posData.m_Pos.x + posData.m_Radius))
+	if ((maxPos + floorOffset.x) <= (posData.m_Pos.x + r))
 	{
 		m_Vel.x = ((-m_Vel.x + floorVel.x) * sm_ReflectionCoef) + floorVel.x;
-		posData.m_Pos.x = (maxPos + floorOffset.x) - posData.m_Radius;
+		posData.m_Pos.x = (maxPos + floorOffset.x) - r;
 	}
 
-	if ((posData.m_Pos.x - posData.m_Radius) <= -(maxPos - floorOffset.x))
+	if ((posData.m_Pos.x - r) <= -(maxPos - floorOffset.x))
 	{
 		m_Vel.x = ((-m_Vel.x + floorVel.x) * sm_ReflectionCoef) + floorVel.x;
-		posData.m_Pos.x = -(maxPos - floorOffset.x) + posData.m_Radius;
+		posData.m_Pos.x = -(maxPos - floorOffset.x) + r;
 	}
 }
 
@@ -293,8 +319,9 @@ void CBall::draw(QPainter &painter)
 {
 	CBallPos &posData = sm_posDataBuf[m_index];
 
+	// 描画では、硬殻半径を用いる
 	// 単位変換
-	int r = posData.m_Radius * 1000;
+	int r = m_Radius2 * 1000.0f;
 	Vector2 position{ (int)(posData.m_Pos.x * 1000), (int)(posData.m_Pos.y * 1000) };
 	// 描画
 	painter.setPen(QPen(col, 2, Qt::SolidLine, Qt::FlatCap));
@@ -311,11 +338,12 @@ void CBall::setInitialValue(Vector2f initialPos, Vector2f speed)
 	m_Vel = speed;
 }
 
-void CBall::setBall(FLOAT_T r, Qt::GlobalColor color, FLOAT_T mass)
+void CBall::setBall(FLOAT_T r, FLOAT_T r2, Qt::GlobalColor color, FLOAT_T mass)
 {
 	CBallPos &posData = sm_posDataBuf[m_index];
 
 	posData.m_Radius = r;
+	m_Radius2 = r2;
 	col = color;
 	m_Mass = mass;
 }
