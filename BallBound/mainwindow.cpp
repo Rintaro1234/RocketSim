@@ -202,11 +202,21 @@ void MainWindow::paintEvent(QPaintEvent *)
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-	// [P]キーが押されたらポーズ
+	// [P]キーが押されたらポーズ/解除
 	if (event->key() == Qt::Key_P) g_Pause = !g_Pause;
 	// [スペース]キーでコマ送り
-	if (event->key() == Qt::Key_Space) g_StepRun = true;
-
+	// ポーズ中でなければポーズ
+	if (event->key() == Qt::Key_Space)
+	{
+		if (g_Pause)
+		{
+			g_StepRun = true;
+		}
+		else
+		{
+			g_Pause = true;
+		}
+	}
 	// [O]キーでリセット
 	if (event->key() == Qt::Key_O)
 	{
