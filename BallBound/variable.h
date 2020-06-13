@@ -14,10 +14,10 @@ public:
 	// 二点間の距離を求める
 	FLOAT_T GetDistance(Vector2f &vt);
 
-	// ベクトルの長さを1にする
+	// ベクトルの長さを求める
 	FLOAT_T GetLength();
 
-	// 長さをそろえる
+	// ベクトルの長さを1にする
 	Vector2f normalize();
 
 	// 内積
