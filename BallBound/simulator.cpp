@@ -13,6 +13,33 @@ FLOAT_T random(FLOAT_T x0, FLOAT_T x1)
 }
 
 //-----------------------------------------------------------------------------
+CSpaceGrid::CSpaceGrid(FLOAT_T simSpaceW, int numCells, int numBalls)
+{
+	m_wallL = -simSpaceW / 2.0f;
+	m_wallR = simSpaceW / 2.0f;
+	m_numCells = numCells;
+	m_cells = new SpaceCell[numCells];
+	// 分割した空間に何のボールが入っているか確かめるための2次配列を作成
+	for (int i = 0; i < m_numCells; i++)
+	{
+		m_cells[i].items = new CellItem[numBalls];
+		m_cells[i].numItems = numBalls;
+	}
+
+	// リセット
+	reset();
+}
+
+CSpaceGrid::~CSpaceGrid(void)
+{
+	for (int i = 0; i < m_numCells; i++)
+	{
+		delete[] m_cells[i].items;
+	}
+	delete[] m_cells;
+}
+
+//-----------------------------------------------------------------------------
 CSimulator::CSimulator(int numBalls, FLOAT_T simSpaceW, FLOAT_T floorParabolaFactor) :
 	m_numBalls(numBalls),
 	m_simSpaceW(simSpaceW),
@@ -27,24 +54,14 @@ CSimulator::CSimulator(int numBalls, FLOAT_T simSpaceW, FLOAT_T floorParabolaFac
 		m_balls[i].m_index = i;
 	}
 
-	// 分割した空間に何のボールが入っているか確かめるための2次配列を作成
-	m_spaceGridA.m_cells = new SpaceCell[m_numCells];
-	for (int i = 0; i < m_numCells; i++)
-	{
-		m_spaceGridA.m_cells[i].items = new CellItem[m_numBalls];
-		m_spaceGridA.m_cells[i].numItems = m_numBalls;
-	}
-	m_spaceGridA.m_wallL = -simSpaceW / 2.0f;
-	m_spaceGridA.m_wallR = simSpaceW / 2.0f;
-	m_spaceGridA.m_numCells = m_numCells;
-
-	// リセット
-	m_spaceGridA.reset();
+	// セルの配列やその他変数を代入する
+	m_spaceGridA = new CSpaceGrid(simSpaceW, m_numCells, m_numBalls);
 }
 
 //-----------------------------------------------------------------------------
 CSimulator::~CSimulator(void)
 {
+	delete m_spaceGridA;
 	delete[] m_balls;
 	delete[] m_ballsPos;
 }
@@ -54,24 +71,24 @@ CSimulator::~CSimulator(void)
 void CSimulator::proceed(FLOAT_T dt, Vector2f &floorOffset, Vector2f &floorVel)
 {
 	// 地形のオフセット量を分割空間の座標に入れる
-	m_spaceGridA.m_wallR = m_simSpaceW/2 + floorOffset.x;
-	m_spaceGridA.m_wallL = -m_simSpaceW/2 + floorOffset.x;
-	m_spaceGridA.update();
+	m_spaceGridA->m_wallR = m_simSpaceW/2 + floorOffset.x;
+	m_spaceGridA->m_wallL = -m_simSpaceW/2 + floorOffset.x;
+	m_spaceGridA->update();
 
 	// 空間わけのリセット
-	m_spaceGridA.reset();
+	m_spaceGridA->reset();
 
 	// 移動計算(コリジョンは無視)
 	for (int i = 0; i < m_numBalls; i++)
 	{
-		m_balls[i].UpdateMove(&m_spaceGridA, dt);
+		m_balls[i].UpdateMove(m_spaceGridA, dt);
 	}
 
 	// 一が高い順にソートする
 	#pragma omp parallel for
 	for (int i = 0; i < m_numCells; i++)
 	{
-		SpaceCell &com = m_spaceGridA.m_cells[i];
+		SpaceCell &com = m_spaceGridA->m_cells[i];
 		qsort(com.items, com.numItems, sizeof(CellItem), compare_YandIdx);
 	}
 
@@ -82,9 +99,9 @@ void CSimulator::proceed(FLOAT_T dt, Vector2f &floorOffset, Vector2f &floorVel)
 	// これを抑制すると、ボールが積み上がった際に、底の方のボールが片方に
 	// 流れる症状が確認された。そのためこの処理は行わない。
 	#pragma omp parallel for
-	for (int i = 0; i < m_spaceGridA.m_numCells; i++)
+	for (int i = 0; i < m_spaceGridA->m_numCells; i++)
 	{
-		const SpaceCell &com = m_spaceGridA.m_cells[i];
+		const SpaceCell &com = m_spaceGridA->m_cells[i];
 		for (int y = 0; y < com.numItems; y++)
 		{
 			const int idx0 = com.items[y].idx;
@@ -128,8 +145,8 @@ void CSimulator::resetState(void)
 {
 	// ボールの初期位置と初速度を乱数で決める
 	// (ついでに色も)
-	FLOAT_T left = m_spaceGridA.m_wallL;
-	FLOAT_T right = m_spaceGridA.m_wallR;
+	FLOAT_T left = m_spaceGridA->m_wallL;
+	FLOAT_T right = m_spaceGridA->m_wallR;
 	FLOAT_T top = 0.6f;
 	FLOAT_T bottom = 0.2f;
 	FLOAT_T speedRange = 0.5f;

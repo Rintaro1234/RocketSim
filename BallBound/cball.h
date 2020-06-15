@@ -14,6 +14,9 @@ class QPainter;
 class CSpaceGrid
 {
 public:
+	CSpaceGrid(FLOAT_T simSpaceW, int numCells, int numBalls);
+	~CSpaceGrid(void);
+
 	// 空間の分割数
 	int m_numCells;
 	// 分割された空間の配列
@@ -150,7 +153,7 @@ protected:
 	// コリジョンチェックを縦に分割する数
 	const int m_numCells = 12;
 	// コリジョンチェックの分割領域
-	CSpaceGrid m_spaceGridA;
+	CSpaceGrid *m_spaceGridA = nullptr;
 
 	// シミュレーション空間の幅
 	FLOAT_T m_simSpaceW;
